@@ -147,7 +147,7 @@ the same buttons honestly report different verdicts.
 | `uv run pytest tests/` | 237 tests, ~3.7s | Offline |
 | `uv run python scripts/demo.py` | The six original sequences, printed with narration | Offline |
 | `uv run uvicorn causal.api:app --port 8000` | The console and the review page | Offline |
-| `uv run python scripts/demo_preflight.py` | Walks `DEMO.md`'s click order, checks 53 numbers, and checks every label the script points at is really on the page | Offline, needs the console running |
+| `uv run python scripts/demo_preflight.py` | Walks `DEMO.md`'s click order, checks every number it quotes, and checks every label it points at is really on the page. Leaves the ledger reset and ready to record | Offline, needs the console running |
 | `uv run python scripts/campaign.py --runs 100` | Randomised adversarial runs with injected faults | Offline |
 | `uv run python scripts/verify_live.py` | Which surfaces are actually reachable, and what is missing for the rest | Read-only HTTPS |
 | `uv run python scripts/verify_live.py --write` | The same, plus a real create-and-read-back per surface | Writes to the live services |
@@ -565,7 +565,7 @@ the authority**.
 | `evidence/campaign.json` | The 100-run randomised campaign: 48 fault combinations, zero invariant violations |
 | `tests/test_g_binding.py` | The four measured rates: semantic recovery, false binding, duplicate prevention, ambiguity refusal |
 | `evidence/summary.json`, `evidence/sequence-*.json` | The last CLI run's counters and per-sequence output |
-| `DEMO.md` + `scripts/demo_preflight.py` | The two-minute demo, and 53 assertions that its numbers and its on-screen labels match the console |
+| `DEMO.md` + `scripts/demo_preflight.py` | The two-minute demo, and a walk of its numbers and its on-screen labels against the running console |
 | `SUBMISSION.md` | The system and reliability brief, including what is not claimed |
 | `ARCHITECTURE.md`, `EVALUATION.md`, `LIMITATIONS.md` | The module map, the fault matrix, and the open limits |
 | `.git/hooks/pre-push`, `scripts/secret_scan.py` | That no credential can be pushed: tree, tracked files, full history and `.env` values |

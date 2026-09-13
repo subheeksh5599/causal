@@ -35,6 +35,9 @@ CONSOLE_LABELS = (
     "Effects · write path vs independent read", "Commit gate",
     "rows unedited", "whole-log chain linked",
     "Invariant counters", "Audit chain",
+    # the fresh/dirty ledger indicator, without which a recorder cannot tell that the
+    # numbers they are about to quote depend on an empty ledger
+    "This ledger already has history", "ledger · fresh",
 )
 REVIEW_LABELS = (
     # static markup only: the job headlines are composed at runtime by plain.job_view and
@@ -158,13 +161,24 @@ def main() -> int:
     check("two committed", metrics["committed"], 2)
     check("zero false commits", metrics["false_commits"], 0)
 
+    print("\nleave the ledger ready to record:")
+    # The walk above proves the numbers, but it also leaves 3 intents and 2 commits behind.
+    # Recording from that state is what makes the first button report IDEMPOTENT with
+    # `matching events: 5` instead of COMMITTED with 1 — so the walk puts the ledger back.
+    check("ledger reset for recording", call("POST", f"{b}/api/reset").get("ok"), True)
+    fresh = call("GET", f"{b}/api/state").get("metrics", {})
+    check("ledger is empty", fresh.get("intents"), 0)
+    check("nothing is committed", fresh.get("committed"), 0)
+
     print()
     if FAILURES:
         print(f"{len(FAILURES)} claim(s) in DEMO.md no longer match the console:")
         for item in FAILURES:
             print(f"  - {item}")
         return 1
-    print(f"{PASSES} claims checked, all match. The click order is good to record.")
+    print(f"{PASSES} claims checked, all match.")
+    print("The ledger has just been reset, so the first click will produce those numbers.")
+    print("Start recording now — and do not press 'reset ledger' again.")
     return 0
 
 

@@ -101,8 +101,9 @@ never silently reversed. `AMBIGUOUS` stops and asks a human. There is no
 - **Repository:** see the submission form. One command, no build step:
   `uv sync && uv run pytest && uv run uvicorn causal.api:app --port 8000`
 - **Two-minute demo:** linked at the top of the README. Six clicks, walked in `DEMO.md`,
-  and `scripts/demo_preflight.py` checks all 53 numbers the script quotes, plus every label
-  it tells you to point at, against the running console.
+  and `scripts/demo_preflight.py` checks every number the script quotes, plus every label it
+  tells you to point at, against the running console — then resets the ledger so the console
+  is exactly in the state the script's first click assumes.
 - **This brief:** the system above, and the reliability story, in one page.
 - **One command that checks the other three:** `uv run python scripts/verify_all.py` runs
   the suite, the randomised campaign, the secret scan and the anchor check, and reads the

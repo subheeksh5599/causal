@@ -80,6 +80,8 @@
   .verdict.fail{border-color:#4a2020;background:#1e0f0f;color:var(--bad)}
   .verdict ul{margin:8px 0 0;padding-left:18px;color:var(--dim);font-size:12px}
   .num{font-family:var(--mono)}
+    .warnbar { background: #3a2410; border: 1px solid #7a5220; color: #ffd9a0;
+               padding: 10px 12px; border-radius: 8px; margin: 0 0 14px; font-size: 13px; }
 </style>
 </head>
 <body>
@@ -87,6 +89,7 @@
   <span class="brand">CAUSAL</span>
   <span class="rule">EFFECTED &ne; <b>VERIFIED</b> &ne; <b>COMMITTED</b></span>
   <span class="spacer"></span>
+  <span class="badge" id="ledger">ledger …</span>
   <span class="badge" id="mode">mode …</span>
   <span class="badge ok" id="apps">gmail · calendar · linear</span>
   <a class="badge" href="/review" style="text-decoration:none">review jobs &rarr;</a>
@@ -104,6 +107,7 @@
   </div>
 
   <main>
+    <div id="ledgerwarn" class="warnbar" style="display:none"></div>
     <div id="outcome"></div>
   </main>
 
@@ -152,6 +156,7 @@ async function boot() {
     rail.appendChild(b);
   });
   paintMetrics(s.metrics);
+  paintLedger(s.metrics);
 }
 
 function paintMetrics(m) {
@@ -169,7 +174,27 @@ function paintMetrics(m) {
 async function runSeq(name) {
   $('outcome').innerHTML = '<div class="panel muted">running…</div>';
   const r = await (await fetch('/api/run/' + name, {method: 'POST'})).json();
-  render(r); paintMetrics(r.metrics); paintAudit(r.audit, r.audit_intact, r.chain_linked);
+  render(r); paintMetrics(r.metrics); paintLedger(r.metrics);
+  paintAudit(r.audit, r.audit_intact, r.chain_linked);
+}
+
+// Every number the demo script quotes depends on the ledger being empty, and a used ledger
+// is otherwise invisible: the first click would report IDEMPOTENT with `matching events`
+// counting the whole day instead of this intent. Repainted after every run and every reset,
+// so the state on screen is the state the counters are computed from.
+function paintLedger(m) {
+  const used = (m && m.intents) || 0;
+  const done = (m && m.committed) || 0;
+  const lb = $('ledger');
+  lb.textContent = used ? `ledger · ${used} intent${used === 1 ? '' : 's'} · ${done} committed`
+                        : 'ledger · fresh';
+  lb.className = 'badge ' + (used ? 'warn' : 'ok');
+  const warn = $('ledgerwarn');
+  warn.style.display = used ? 'block' : 'none';
+  if (used) {
+    warn.innerHTML = `<b>This ledger already has history.</b> The demo script's numbers assume `
+      + `a fresh one — press <b>reset ledger</b> before recording, and not again afterwards.`;
+  }
 }
 
 function render(r) {

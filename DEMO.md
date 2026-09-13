@@ -14,9 +14,14 @@ uv run uvicorn causal.api:app --port 8000
 ```
 
 Open `http://127.0.0.1:8000` in one tab and `http://127.0.0.1:8000/review` in a second.
-Press **reset ledger** once in the left rail. Do not press it again after that — the counts
-are the real objects in the world, so a second press of the same button reports different
-numbers, honestly.
+
+Press **reset ledger** once. The header then reads `ledger · fresh` and the amber bar
+disappears. **Every number below assumes that state.** If the header instead reads
+`ledger · 3 intents · 2 committed` under an amber bar saying *This ledger already has
+history*, press **reset ledger** before you record.
+
+Then do not press it again: the counters are the real objects in the world, so a second
+press reports different numbers, honestly.
 
 Then prove the script still matches the console:
 
@@ -24,8 +29,9 @@ Then prove the script still matches the console:
 uv run python scripts/demo_preflight.py
 ```
 
-It walks this click order against the running console, checks 53 numbers, and checks that
-every label this file points at still exists in the page.
+It walks this click order against the running console, checks every number quoted below,
+checks that every label this file points at still exists in the page — and then resets the
+ledger again, so the state it hands you is the state the first click needs.
 
 **After you record:** paste the video link into the README's `## ▶ Demo` section, which
 currently holds the literal placeholder `PASTE_VIDEO_LINK_HERE`. Then run the release gate:
@@ -157,6 +163,21 @@ Point at `INVARIANT COUNTERS`, then at `AUDIT CHAIN` below it, which ends with
 > exactly never."
 
 ### 2:00 — stop
+
+---
+
+## If the numbers don't match
+
+The first click should end `COMMITTED` with `matching events 1`. If it ends `IDEMPOTENT`
+with `matching events` above 1, `wrote this run` all zeros and a Commit gate reason reading
+*this intent already exists in state COMMITTED*, then the ledger already held this work when
+you started. Nothing is broken — the engine is telling you the work was already done, which
+is what it is for. Press **reset ledger**, confirm the header reads `ledger · fresh`, and
+click the button again.
+
+`demo_preflight.py` resets the ledger as its last step for exactly this reason: after it
+prints `all match`, the console is in the state the first click needs, so press record
+without touching anything else.
 
 ---
 
