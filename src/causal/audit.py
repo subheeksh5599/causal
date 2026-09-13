@@ -119,7 +119,7 @@ class Audit:
             out.append(row)
         return out
 
-    def verify_chain(self, intent_id: str) -> bool:
+    def verify_chain(self, intent_id: str | None = None) -> bool:
         """Verify the audit log.
 
         The chain is global: every row links to the row before it in the whole
