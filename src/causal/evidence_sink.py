@@ -67,7 +67,7 @@ class OutcomeStore:
         if reconciled and status in ("COMMITTED", "IDEMPOTENT"):
             prevented += 1
         if refusal_code == "CONFLICT":
-            pass  # reconciliation counted only
+            prevented += 1
         with self._lock:
             self._conn.execute(
                 "INSERT OR REPLACE INTO outcomes (intent_id, intent_hash, status, committed,"
