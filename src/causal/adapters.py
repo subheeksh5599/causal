@@ -20,22 +20,32 @@ you the identical code path against a stateful service replica instead of the
 production API — that is the LIVE / TWIN switch, and it is one environment
 variable, not a code change.
 """
+
 from __future__ import annotations
+
 import base64
 import os
 import re
 import time
 from dataclasses import dataclass
 from typing import Protocol
+
 from .apps import PermanentError, TransientError
+
 INTENT_TAG = "CAUSAL"
+
+
 class TokenSource(Protocol):
     """Anything that can produce a bearer token: OAuth refresh, or a static
     twin token."""
 
     def token(self) -> str: ...
+
+
 _ANGLE = re.compile(r"<([^<>@\s]+@[^<>\s]+)>")
 _LOOSE = re.compile(r"[^\s<>,;\"]+@[^\s<>,;\"]+")
+
+
 def address_of(value: str) -> str:
     """The address a message actually came from.
 
@@ -56,8 +66,12 @@ def address_of(value: str) -> str:
         return found.group(1).strip().lower()
     loose = _LOOSE.search(raw)
     return (loose.group(0) if loose else raw).strip().lower()
+
+
 def _hash_tag(intent_hash: str) -> str:
     return f"[{INTENT_TAG}:{intent_hash[:8]}]"
+
+
 def _request(method: str, url: str, *, headers: dict, json_body=None, data=None, timeout: float = 30.0):
     import httpx
 
@@ -99,6 +113,8 @@ class GoogleAuth:
         self._token = body["access_token"]
         self._expires_at = time.time() + float(body.get("expires_in", 3600))
         return self._token
+
+
 class GmailLive:
     """Read-only. In this design Gmail is the authority for approval, never a target."""
 
@@ -122,7 +138,7 @@ class GmailLive:
         internal = payload.get("internalDate")
         return {
             "id": payload.get("id", message_id),
-            "from": headers.get("from", ""),
+            "from": address_of(headers.get("from", "")),
             "subject": headers.get("subject", ""),
             "body": body,
             "timestamp": (float(internal) / 1000.0) if internal else None,
@@ -154,6 +170,8 @@ class GmailLive:
             if text:
                 return text
         return ""
+
+
 class CalendarLive:
     name = "calendar"
     base_url_default = "https://www.googleapis.com"
@@ -328,6 +346,8 @@ class Mode:
     base URL for a stateful service replica and needs no OAuth at all."""
 
     kind: str = "LOCAL"
+
+
 class Unavailable:
     """A service with no credentials configured.
 
@@ -347,6 +367,8 @@ class Unavailable:
             raise PermanentError(f"{self.name}: unavailable — {self.reason}")
 
         return _refuse
+
+
 class StaticAuth:
     """Bearer token for twin-hosted services, where there is no OAuth dance."""
 
@@ -355,6 +377,8 @@ class StaticAuth:
 
     def token(self) -> str:
         return self._token
+
+
 def _slack_client(*, twin: bool = False):
     """Slack is optional in this build. A Slack twin needs no credentials at all,
     and without either, the client refuses loudly instead of reporting silence."""
@@ -366,6 +390,8 @@ def _slack_client(*, twin: bool = False):
     if token:
         return SlackLive(token, channel_id=channel)
     return Unavailable("slack", "no SLACK_BOT_TOKEN and no Slack twin configured")
+
+
 def build_apps(mode: str | None = None):
     """Return the Apps bundle for the requested mode: LOCAL, LIVE or TWIN."""
     from .apps import Apps
