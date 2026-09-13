@@ -1,7 +1,6 @@
 # CAUSAL — system and reliability brief
 
 **Intent-bound cross-app execution: commit once, prove once, never double-act.**
-Multi-App AI Agent Hackathon · Sunday, September 13, 2026
 
 ---
 

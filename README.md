@@ -14,7 +14,7 @@
 
 </div>
 
-Most multi-app agents answer the easy question: _did the API call succeed?_ CAUSAL answers the harder one — **can you prove each external effect is the authorised, conflict-free consequence of the one intent you approved?** It gives agents idempotent commit semantics over APIs with no idempotency primitive, by binding an intent to an independently observed effect instead of trusting a response. Stripe takes an idempotency key. Gmail, Calendar and Linear do not — they never saw your intent id, they do not participate in your transaction, and when a response is lost the only question left is not _did my request succeed_ but _does an effect matching this intent already exist out there_. When nobody can prove which effect is ours, CAUSAL refuses to commit and says so.
+Most agent stacks answer the easy question: _did the API call succeed?_ CAUSAL answers the harder one — **can you prove each external effect is the authorised, conflict-free consequence of the one intent you approved?** It gives agents idempotent commit semantics over APIs with no idempotency primitive, by binding an intent to an independently observed effect instead of trusting a response. Stripe takes an idempotency key. Gmail, Calendar and Linear do not — they never saw your intent id, they do not participate in your transaction, and when a response is lost the only question left is not _did my request succeed_ but _does an effect matching this intent already exist out there_. When nobody can prove which effect is ours, CAUSAL refuses to commit and says so.
 
 ```
 EFFECTED  ≠  VERIFIED  ≠  COMMITTED
