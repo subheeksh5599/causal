@@ -1,0 +1,59 @@
+{
+  "intent_id": "C-1043",
+  "intent_hash": "6cb8d2f0cd27a4711ce51b60110f8ccf",
+  "status": "COMMITTED",
+  "committed": true,
+  "refusal_code": "",
+  "reasons": [],
+  "evidence": {
+    "ok": true,
+    "source_app": "gmail",
+    "message_id": "msg-2",
+    "approved": true,
+    "stated_start_iso": "2026-09-15T16:00",
+    "content_hash": "9de32f55906728ed54c0751004220227",
+    "observed_at": 1789295175.2158313,
+    "reasons": []
+  },
+  "effects": [
+    {
+      "intent_hash": "6cb8d2f0cd27a4711ce51b60110f8ccf",
+      "intent_id": "C-1043",
+      "effect_id": "CALENDAR-01",
+      "app": "calendar",
+      "operation": "CREATE_EVENT",
+      "state": "VERIFIED",
+      "idempotency_key": "6cb8d2f0cd27a4711ce51b60110f8ccf::CALENDAR-01",
+      "external_id": "evt-0002",
+      "attempts": 1,
+      "updated_at": 1789295175.2565045
+    },
+    {
+      "intent_hash": "6cb8d2f0cd27a4711ce51b60110f8ccf",
+      "intent_id": "C-1043",
+      "effect_id": "LINEAR-01",
+      "app": "linear",
+      "operation": "CREATE_ISSUE",
+      "state": "VERIFIED",
+      "idempotency_key": "6cb8d2f0cd27a4711ce51b60110f8ccf::LINEAR-01",
+      "external_id": "lin-0002",
+      "attempts": 1,
+      "updated_at": 1789295175.2744496
+    }
+  ],
+  "reconciliations": [
+    {
+      "id": 1,
+      "intent_hash": "6cb8d2f0cd27a4711ce51b60110f8ccf",
+      "effect_id": "CALENDAR-01",
+      "ambiguous_state": "UNKNOWN",
+      "confidence": "EXACT",
+      "found_existing": 1,
+      "strategy": "intent_hash+subject+operation",
+      "detail": "{\"matched\": 1}",
+      "created_at": 1789295175.2516148
+    }
+  ],
+  "writes_attempted": 0,
+  "model_calls": 0
+}
