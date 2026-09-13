@@ -1,0 +1,10 @@
+.env
+.env.*
+!.env.example
+evidence/*.db
+evidence/*.db-shm
+evidence/*.db-wal
+*.pyc
+__pycache__/
+.twins/
+.venv/
