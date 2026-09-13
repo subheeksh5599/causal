@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Build the README table of contents, and verify every anchor in it resolves.
 
 GitHub's heading slugger is not `text.lower().replace(' ', '-')`. The rules that
@@ -17,14 +18,19 @@ only way to know the nav links are not dead.
     uv run python scripts/readme_toc.py           # rewrite the TOC block in place
     uv run python scripts/readme_toc.py --check   # verify only, non-zero on a mismatch
 """
+
 from __future__ import annotations
+
 import argparse
 import re
 import sys
 from pathlib import Path
+
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 MARKER = "<!--TOC-->"
+
+
 def slug(heading: str) -> str:
     """GitHub's anchor for a heading. Order matters: strip punctuation first."""
     text = heading.strip().lower()
@@ -36,8 +42,10 @@ def slug(heading: str) -> str:
     text = re.sub(r"[^\w\s-]", "", text)  # anything else non-word goes
     # No strip() here: GitHub replaces spaces with hyphens without trimming first, which
     # is why "## ▶ Demo" anchors as "#-demo" (it is also in the reference README's TOC).
-    text = text.strip().replace(" ", "-")
+    text = text.replace(" ", "-")
     return re.sub(r"-{3,}", "--", text)
+
+
 def headings(md: str) -> list[tuple[int, str]]:
     out = []
     for line in md.splitlines():
@@ -45,12 +53,18 @@ def headings(md: str) -> list[tuple[int, str]]:
         if m and not line.startswith("<!--"):
             out.append((len(m.group(1)), m.group(2)))
     return out
+
+
 def build(md: str) -> str:
     lines = [f"- [{text}](#{slug(text)})" for level, text in headings(md) if level == 2]
     return "\n".join(lines)
+
+
 def links(md: str) -> list[str]:
     """Every in-document anchor used at all: TOC entries and inline nav links."""
     return re.findall(r"\]\(#([^)]+)\)", md)
+
+
 def replace_toc(md: str, toc: str) -> str | None:
     """Rewrite the block between the TOC heading and the next rule.
 
@@ -67,6 +81,8 @@ def replace_toc(md: str, toc: str) -> str | None:
     if end is None:
         return None
     return "\n".join(lines[:start + 1] + [""] + toc.splitlines() + lines[end:]) + "\n"
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--check", action="store_true")
@@ -102,5 +118,7 @@ def main() -> int:
     README.write_text(updated)
     print(f"wrote {len(toc.splitlines())} TOC entries")
     return 0
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
