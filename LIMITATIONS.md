@@ -6,7 +6,8 @@ Written to be read by a sceptic. Everything here is a real bound on what the sys
 
 - **Three apps, not a platform.** Gmail authorizes, Calendar schedules, Linear works. The
   protocol is app-agnostic and the adapter interface is small, but only these three have live
-  clients. Slack support exists in code and is not used by the flagship workflow.
+  clients. Slack is wired and is the held outbound effect in the sign-off sequence — a fourth
+  surface, not a general notification system.
 - **Only a `LIVE` or `TWIN` run demonstrates the integrations.** `LOCAL` mode exercises the
   protocol deterministically against in-process services. It is not evidence about Google's or
   Linear's APIs, and it is never presented as such.
@@ -45,8 +46,9 @@ Written to be read by a sceptic. Everything here is a real bound on what the sys
   Postgres; the `claim`/`checkpoint` interfaces are what would survive the move.
 - **External objects can change after verification.** Detected on a subsequent read, not
   prevented. Nothing prevents a human editing the calendar event afterwards.
-- **No end-user surface yet.** The engine, the harness and the artifacts exist. The operator
-  console is the next piece of work.
+- **No accounts, tenancy or hosted deployment.** There is a local operator surface — the console
+  and the review page, both served by the same process — but it is a tool for one operator on one
+  machine, not a product with users.
 - **The model is optional by design.** The protocol runs with zero model calls, which is what
   makes invariant 10 true. Extraction from natural language is the model's only intended job,
   and it is the least exercised part of the system.

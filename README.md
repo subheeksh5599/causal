@@ -73,7 +73,7 @@ flowchart TD
 - [Attack → test](#attack--test)
 - [The app](#the-app)
 - [Prior art, credited](#prior-art-credited)
-- [What this cannot do](#what-this-cannot-do)
+- [Limitations](#limitations)
 - [Security](#security)
 - [Tech stack](#tech-stack)
 - [Project layout](#project-layout)
@@ -498,13 +498,37 @@ Not claimed as invented. The honest attribution is worth more than the overclaim
 
 What is proposed as new here is the combination: **an external action is not successful because the artifact exists, but only if it is provably the authorised, conflict-free consequence of one frozen intent — enforced across applications that share no transaction boundary.**
 
-## What this cannot do
+## Limitations
 
-`LIMITATIONS.md` is the full list. The three that matter most:
+Written to be read by a sceptic, and printed here in full rather than left in a file. Everything
+below is a real bound on what this system can claim. `LIMITATIONS.md` holds the same list, and
+`EVALUATION.md` carries the fault matrix — for each fault, the external state, the CAUSAL state,
+and the behaviour that is required, including where a fault cannot be produced in `LOCAL` mode.
 
-- **It is not a distributed transaction.** Two providers with no shared transaction cannot be made to commit together. CAUSAL detects disagreement, refuses to call it success, and reconciles or escalates. That is weaker than atomicity and it is not presented as atomicity.
-- **The commit is only as strong as the postconditions.** Three app checkers ship — calendar, Linear, Slack — plus a temporal-claims check, and each one is registered against the intent rather than written ad hoc. A gap in a checker is a gap in the guarantee, and a required effect with no registered checker is refused rather than passed.
-- **`AMBIGUOUS` stops and asks a human.** Deliberate. A system that guesses between two plausible artifacts is worse than one that refuses.
+**Not claimed**
+
+- **Three apps, not a platform.** Gmail authorizes, Calendar schedules, Linear works. The protocol is app-agnostic and the adapter interface is small, but only these three have live clients. Slack is wired and is the held outbound effect in the sign-off sequence — it is the fourth surface, not a general notification system.
+- **Only a `LIVE` or `TWIN` run demonstrates the integrations.** `LOCAL` mode exercises the protocol deterministically against in-process services. It is not evidence about Google's or Linear's APIs, and it is never presented as such.
+- **No atomicity across providers.** Two services with no shared transaction cannot be made to commit together by an orchestration layer. CAUSAL aims at the honest version: detect the disagreement, refuse to call it success, and reconcile or escalate. That is weaker than a distributed transaction and it is not a distributed transaction.
+- **Two genuinely concurrent callers can still race.** Where a provider offers no atomic idempotency key, CAUSAL narrows this to a local unique constraint plus an external read-back. It does not close it.
+
+**Bounded by inputs**
+
+- **Correctness is bounded by what a provider exposes.** If an API returns materially incomplete state, no read-back can be better than that state.
+- **The commit is only as strong as the postconditions.** Four checkers ship. They are strict — exact title, exact start, exact attendees, intent hash present, and a temporal-claim rule that refuses any artifact whose date contradicts the frozen scope — but they are also a small, hand-written set. **A gap in a checker is a gap in the guarantee**, and a required effect with no registered checker is refused rather than passed.
+- **Temporal claims are matched textually.** A date in a form the parser does not recognise is not compared. The rule catches what it can parse; it does not understand language.
+
+**Deliberate stops**
+
+- **`AMBIGUOUS` escalates to a human.** Two plausible artifacts are never resolved by choosing. That is a feature with a cost: the workflow stalls where a guesser would have continued.
+- **`UNKNOWN` can stay unknown indefinitely** if the read that would settle it is also failing. The system refuses to progress rather than retry blind — the correct failure mode, and an inconvenient one.
+
+**Engineering bounds**
+
+- **Single-host store.** SQLite with a partial unique index and `BEGIN IMMEDIATE`. The concurrency guarantee is real on one machine. Horizontal scale needs the same constraint in Postgres; the `claim`/`checkpoint` interfaces are what would survive the move.
+- **External objects can change after verification.** Detected on a subsequent read (that is what the post-commit scan is for), not prevented. Nothing stops a person editing the calendar event afterwards.
+- **Extraction from language is the least exercised surface.** The protocol runs with zero model calls — that is the whole point — and the shipped proposer is a rule parser, so the natural-language intake is tested (15 tests) but has never been driven by a real hosted model.
+- **The console is a local operator surface, not a product.** Two static pages served by the same process, no accounts, no tenancy, no hosted deployment.
 
 ## Security
 
