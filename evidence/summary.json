@@ -1,0 +1,15 @@
+{
+  "mode": "LOCAL",
+  "sequences": 6,
+  "sequences_in_the_system": 13,
+  "external_apps": 3,
+  "required_effects_per_intent": 2,
+  "commits": 2,
+  "refusals": 3,
+  "ambiguous_outcomes_reconciled": 1,
+  "duplicate_effects_prevented": 2,
+  "duplicate_effects_written": 0,
+  "false_commits": 0,
+  "commits_decided_by_a_model": 0,
+  "success_proven_by_independent_read_back": true
+}
