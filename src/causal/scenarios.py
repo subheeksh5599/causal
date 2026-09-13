@@ -48,10 +48,7 @@ def _fixture_clock() -> tuple[str, str, str, str]:
 
 
 CONTACT = "buyer@acme.example"
-REFERENCE_DATE = "2026-09-14"
-TUESDAY = "2026-09-15T15:00"
-TUESDAY_LATE = "2026-09-15T16:00"
-WEDNESDAY = "2026-09-16T16:00"
+REFERENCE_DATE, TUESDAY, TUESDAY_LATE, WEDNESDAY = _fixture_clock()
 
 SEQUENCES = [
     ("intended", "The intended path"),
