@@ -71,9 +71,7 @@ def main() -> int:
     print("verifying the claims in README.md\n")
 
     # 1. the suite
-    code, out = run(["uv", "run", "pytest", "tests/", "-q"])
-    match = re.search(r"(\d+) passed", out)
-    actual_tests = int(match.group(1)) if match else 0
+    actual_tests, failure = count_tests()
     report.add("test suite passes", not failure and actual_tests > 0,
                f"{actual_tests} tests" if not failure else failure.strip().splitlines()[-1][:70])
 
