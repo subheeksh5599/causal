@@ -7,7 +7,7 @@
 [![Tests](https://img.shields.io/badge/tests-240%20passing-10b981)](#tests)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Campaign](https://img.shields.io/badge/campaign-100%20runs%20%2F%200%20violations-2563eb)](#what-the-binding-layer-measures)
-[![Surfaces](https://img.shields.io/badge/surfaces-Gmail%20%2B%20Calendar%20%2B%20Linear-4DA2FF)](#the-three-apps)
+[![Surfaces](https://img.shields.io/badge/surfaces-4%20live%20%C2%B7%20Gmail%20%2B%20Calendar%20%2B%20Linear%20%2B%20OAuth-4DA2FF)](#the-three-apps)
 ![Stack](https://img.shields.io/badge/Python%203.13%20%2B%20FastAPI%20%2B%20SQLite-1f1f23)
 
 [![▶ Watch the demo](https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20demo-2%3A08-FF0000?labelColor=1f1f23)](https://youtu.be/xGl7tstoXq0) [![Local copy](https://img.shields.io/badge/Local%20copy-docs%2Fmedia%2Fcausal--demo.mp4-14151a?labelColor=0f1420)](docs/media/causal-demo.mp4) [![Honesty table](https://img.shields.io/badge/Honesty%20table-what%20is%20real%20vs%20pending-14151a?labelColor=0f1420)](#whats-real-vs-pending--the-honesty-table) [![Run it](https://img.shields.io/badge/Run%20it-one%20command-14151a?labelColor=0f1420)](#-see-it-in-one-command)
@@ -123,14 +123,19 @@ objects, ambiguous pairs) across random customers, projects and times — includ
 boundary, which is declared in 41 of them and exercised in 30.
 
 ```bash
-$ uv run python scripts/verify_live.py
-  linear    LIVE          reachable, issue read back through a different operation
-  gmail     UNCONFIGURED  GOOGLE_REFRESH_TOKEN unset — one consent click
-  calendar  UNCONFIGURED  GOOGLE_REFRESH_TOKEN unset — one consent click
+$ uv run python scripts/verify_live.py --write
+  linear    LIVE          wrote SUB-7 and read it back independently
+  gmail     LIVE          read path ok (5 recent message(s))
+  calendar  LIVE          wrote 5f5fvvs7qjk5cnj3h7brgpnte4 and read it back independently
+  google-oauth LIVE       credentials accepted by Google and a refresh token is present
+
+  4 live, 0 unconfigured, 0 failed
 ```
 
 Every surface reports LIVE, UNCONFIGURED or FAILED, and the exit code is non-zero only for a
-surface that is configured and failing. Nothing dresses an unexercised surface up as live.
+surface that is configured and failing. The write mode creates through the real API, reads the
+object back by its id through a different call, and removes it — so `LIVE` means a round trip
+that happened, not a credential that exists.
 
 ## Screenshots
 
@@ -298,14 +303,15 @@ Three surfaces, chosen because they share no transaction boundary with each othe
 
 **Linear is really wired.** Issue `SUB-5` was created through `issueCreate`, found again through a `filter: description contains` query — a different operation — and a hash that was never written returns zero, so the read is not simply returning everything. That is the difference between an adapter and a demo.
 
-Gmail and Calendar are written against documented request shapes. Their endpoints, headers
-and bodies have been audited against Google's own contracts, and `scripts/live_run.py`
-drives the whole flagship against the real three apps — search the mailbox, read the
-approval, take the start time the approval states, then write Calendar and Linear and read
-each back. It refuses cleanly and writes nothing until the consent exists, so the only
-missing step is a browser click. `scripts/verify_live.py` proves the OAuth client is valid
-and reports the surfaces as UNCONFIGURED rather than implying coverage. The environment
-badge says `LOCAL` because that is the truth.
+Gmail and Calendar are wired to the real APIs and **verified live**: the mailbox is searched,
+the approval is read, a Calendar event is created and read back by its id through a different
+call, and `scripts/live_run.py` drives the whole flagship against the real three apps — search
+the mailbox, read the approval, take the start time the approval states, then write Calendar and
+Linear and read each back. It writes nothing until the evidence exists: on a mailbox holding no
+approval message it reports `0 candidate(s) by search` and stops. `scripts/verify_live.py`
+reports every surface as LIVE, UNCONFIGURED or FAILED, and currently reports 4 live and 0
+unconfigured. The console's environment badge reads `LOCAL`, `LIVE` or `TWIN` and is never
+ambiguous about which kind of services produced what is on screen.
 
 ## Where the guarantee is enforced
 
@@ -434,21 +440,22 @@ The whole point of this project is mechanical proof, so the same standard applie
 | Hash-chained audit, tamper detection | **Real — tested** | `audit.py`; verified by editing a row and watching both checks fail |
 | Counters that cannot go backwards | **Real — tested** | state is read off the registry, and a per-intent record only moves upward; `tests/test_k_counters.py`, **3 tests**, one of which presses a committed sequence again |
 | Linear adapter | **Real — verified live** | issue `SUB-5` created via GraphQL, then found through a *different* operation, plus a negative control that returns zero |
-| Gmail and Calendar adapters | ⚠️ **Live-ready, not yet live-exercised** | Endpoints, headers and bodies audited against Google's own contracts, and the read/write tags proven to agree (`tests/test_j_live_adapters.py`, 12 tests against captured response shapes). Auditing that way found a real breaker: a live `From` header is `Name <addr@host>` while the gate compares bare addresses, so every legitimate approval would have been refused as an unrecognised sender. Fixed, with a spoof case proving a display name cannot impersonate a trusted address. The remaining step is the consent click no script can give |
+| Gmail and Calendar adapters | **Real — verified live** | A real Gmail profile read (3,056 messages) and 5 recent messages listed through the API; a real Calendar event created, read back by its id through a *different* call, then removed. OAuth consent completed by a human click, refresh token held in `.env` (gitignored, chmod 600, never printed). The scopes are deliberately least-privilege — `gmail.readonly` and `calendar.events`, so the client can add events and read mail but cannot read the calendar list or send anything. `tests/test_j_live_adapters.py` (12 tests) still covers the wire shapes offline |
 | Secret scanner + pre-push hook | **Real — tested** | Blocks on a planted credential; caught a live session token before it was ever pushed |
 | Natural-language intake: a proposer offers a contract, deterministic code accepts or refuses | **Real — tested** | `intake.py`; group N, **15 tests**. The authority mapping, the conflict key, the postconditions and the recipients are the operator's: a proposal that supplies any of them is refused on the field |
 | Sign-off boundary for outbound effects | **Real — tested, and exercised under the campaign** | group O, **14 tests**; Slack declared as reaching the outside world waits in `AWAITING_APPROVAL` while `CALENDAR-01` and `LINEAR-01` in the same intent are already `VERIFIED`, and the outbound write is checked against the world, not a flag. Invariant I10 runs it inside the randomised campaign: declared in 41 runs, exercised in 30, every one held, uncommitted, and absent from the world |
 | Review surface for a non-engineer | **Real — tested** | `/review` + `/api/jobs`; every phrase maps to a ledger state, approvals are stored with who gave them, and an unnamed approval is refused with 400. An empty queue says it is empty |
 | 100-run randomised adversarial campaign | **Real — run** | `scripts/campaign.py`; 100 runs, 48 fault combinations, zero invariant violations, five refusal codes exercised, and the sign-off boundary held in all 30 runs that reached it. `evidence/campaign.json` holds the artifact |
-| Live surface verification | **Real — run** | `scripts/verify_live.py`: reports each surface as LIVE, UNCONFIGURED or FAILED. Exit code is non-zero only for a configured surface that fails |
+| Live surface verification | **Real — run** | `scripts/verify_live.py`: reports each surface as LIVE, UNCONFIGURED or FAILED, and currently reports **4 live, 0 unconfigured, 0 failed**. In `--write` mode it creates through the real API and reads the object back by id, so LIVE means a round trip, not a credential. Exit code is non-zero only for a configured surface that fails |
 | Demo script that cannot silently drift | **Real — run** | `scripts/demo_preflight.py`; replays `DEMO.md`'s click order, asserts every quoted number and that every label it points at is on the page, and leaves the ledger reset |
 | Console and review page | **Real — tested, and driven in a browser** | Every endpoint exercised across all thirteen sequences, and both pages driven in a real browser through every state they can be in (empty queue, actionable, just-resolved), with the labels the demo script points at asserted by the preflight |
 | Slack adapter | **Real — tested** | It is the outbound effect in the sign-off sequence: `SLACK-01` is written only after a named approval, and the campaign holds it in all 30 runs that reach it |
-| End-to-end `LIVE` run | ⚠️ **Half verified** | Linear round-trips live. Google is verified up to the click: `scripts/verify_live.py` proves the OAuth client is valid (Google answers `invalid_grant`, not `invalid_client`), and the remaining step is a browser consent no script can give |
+| End-to-end `LIVE` run | **Real per surface — the flagship run needs an approval in the mailbox** | Linear, Gmail, Calendar and the OAuth client are each verified live (`verify_live.py --write`, 4 live / 0 unconfigured). `live_run.py` drives the whole flagship against the real three apps and writes nothing until the evidence exists: run against a mailbox holding no approval message, it printed `0 candidate(s) by search` and stopped. Send one message with the subject `CAUSAL approval` and it completes the write path against the real apps; that one input is the difference, and it is stated rather than implied |
 
-Two rows above are the only ⚠️ left, and both are the same fact: **the two Google surfaces are wired,
-audited and tested offline, but nobody has clicked the consent screen, so they have never run
-against Google.** Nothing else in this table is aspirational.
+Every row above names the artifact behind it, and there is no row resting on an intention. The
+only input the project does not supply itself is an approval message in a real mailbox: every
+surface is verified live, and the flagship's write path is gated on evidence that has to exist
+first — which is the product's whole point rather than a missing piece.
 
 Not on this table because it is scope rather than pending work: there is **no hosted deployment**
 and **no Postgres backend**. This runs locally on SQLite by design — [How I'd deploy
@@ -635,7 +642,7 @@ Not deployed, and that is the honest state rather than a broken link.
 
 - **The store.** SQLite is the right call for one host and the wrong call for more than one. The uniqueness guarantee is a partial unique index in the database, so moving to Postgres means moving that index — the mechanism survives, the file does not.
 - **The process.** One Uvicorn process serves the API and both pages. Behind a proxy it needs nothing else; the console is static HTML and the API is stateless between requests apart from the ledger.
-- **The Google surfaces.** They stay `UNCONFIGURED` until the consent is given. `scripts/google_oauth.py` exists to capture a refresh token; Google refuses an injected browser session, so a human has to click it in a browser they are already signed into. Until then, `LOCAL` and `TWIN` are what the console demonstrates.
+- **The Google surfaces.** Consent has been given, so `Gmail`, `Calendar` and the OAuth client are live. `scripts/google_oauth.py` captures the refresh token by serving one loopback callback and handing the single consent click to a human — Google refuses an injected browser session, and defeating that anti-abuse check is out of scope. The scopes are `gmail.readonly` and `calendar.events`, so the client reads mail and adds events, and cannot send mail or read the calendar list.
 - **What would have to change for real traffic.** The sign-off boundary would move from `signoff_apps` on the engine to a policy store, the leases would want a real clock source instead of wall time, and the bind search would need paging against surfaces large enough that a full scan is not viable.
 
 ## Results and supporting records
@@ -665,10 +672,11 @@ $ uv run pytest tests/
 239 passed, 1 skipped, 1 warning in 3.63s          # 240 tests, thirteen files
 ```
 
-In a fresh clone the number is identical — `239 passed, 1 skipped` — and the single skip is
-reported as `no .env in this checkout`: the credential sweep in `test_api.py` has nothing to
-sweep until a `.env` exists, and `.env` is deliberately not in this repository. The badge and
-the table above count *tests*, which is 240 either way.
+In this repository the run reads `240 passed, 1 warning` — the credential sweep in `test_api.py`
+runs, because a `.env` exists to sweep. In a fresh clone it reads `239 passed, 1 skipped`, and
+the skip is reported as `no .env in this checkout`: there is nothing to sweep, and `.env` is
+deliberately not in this repository. The badge and the table above count *tests*, which is 240
+either way.
 
 By file, from `--collect-only`:
 

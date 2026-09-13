@@ -40,6 +40,24 @@ def env(name: str) -> str:
     return (os.environ.get(name) or "").strip()
 
 
+def load_env() -> None:
+    """Read a `.env` in the repository root, without overwriting the real environment.
+
+    The credentials are documented as living there (gitignored, chmod 600), so a script that
+    reads only `os.environ` reports the surfaces unreachable on the machine where they were
+    just configured — and refuses a live run that would have worked.
+    """
+    env = ROOT / ".env"
+    if not env.exists():
+        return
+    for line in env.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
 def google_auth() -> GoogleAuth | None:
     cid, secret, refresh = env("GOOGLE_CLIENT_ID"), env("GOOGLE_CLIENT_SECRET"), env("GOOGLE_REFRESH_TOKEN")
     if not (cid and secret and refresh):
@@ -79,6 +97,7 @@ def find_approval(gmail: GmailLive, *, query: str, customer: str, project: str):
 
 
 def main() -> int:
+    load_env()
     ap = argparse.ArgumentParser()
     ap.add_argument("--query", default="subject:CAUSAL approval",
                     help="Gmail search used to find the approval (default: %(default)r)")

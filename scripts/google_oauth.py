@@ -49,6 +49,7 @@ REDIRECT_URI = f"http://127.0.0.1:{PORT}/oauth2callback"
 ENV_PATH = Path(__file__).resolve().parents[1] / ".env"
 URL_FILE = Path("/tmp/causal_oauth_url.txt")
 CODE_FILE = Path("/tmp/causal_oauth_code.txt")
+LOG_FILE = Path("/tmp/causal_oauth_log.txt")
 
 
 def load_env() -> None:
@@ -88,11 +89,24 @@ def build_auth_url(client_id: str, state: str) -> str:
 def _handler_for(state: str, captured: dict[str, str], on_code=None):
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self) -> None:  # noqa: N802
+            # Log EVERY request before judging it: a callback carrying a stale state (an
+            # older consent tab, a resent link) used to be answered with a bare 400 and no
+            # record, so the run ended "no code returned: unknown error" with nothing to
+            # diagnose from. The log makes the difference visible.
+            try:
+                with LOG_FILE.open("a") as fh:
+                    fh.write(f"{time.strftime('%H:%M:%S')} {self.path}\n")
+            except OSError:
+                pass
             params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
             if params.get("state", [""])[0] != state:
                 self.send_response(400)
+                self.send_header("Content-Type", "text/html")
                 self.end_headers()
-                self.wfile.write(b"state mismatch, ignored")
+                self.wfile.write(
+                    b"<h2>This link is stale.</h2><p>It carries a different state token than "
+                    b"the listener that is running. Open the URL printed by the current "
+                    b"process, and nothing else.</p>")
                 return
             captured["code"] = params.get("code", [""])[0]
             captured["error"] = params.get("error", [""])[0]
@@ -146,12 +160,27 @@ def exchange_code(code: str) -> dict:
     else:
         problems.append(f"Gmail returned {gmail.status_code}: {gmail.text[:200]}")
 
-    cal = httpx.get("https://www.googleapis.com/calendar/v3/users/me/calendarList",
-                    headers=headers, timeout=30)
-    if cal.status_code == 200:
-        print(f"  Calendar   OK  ({len(cal.json().get('items', []))} calendars visible)")
+    # Verify Calendar against the operations CAUSAL actually performs: create an event and
+    # read it back through a different call, then remove it. Listing calendars was asking
+    # for `calendar.readonly`, a scope this client deliberately does NOT request (least
+    # privilege: it may add events, never read the user's whole calendar list), so the probe
+    # reported 403 "insufficient authentication scopes" on a credential that was perfect.
+    cal_url = "https://www.googleapis.com/calendar/v3/calendars/primary/events"
+    probe = {"summary": "CAUSAL consent check (created and removed by scripts/google_oauth.py)",
+             "description": "safe to delete",
+             "start": {"dateTime": "2026-09-15T15:00:00+05:30"},
+             "end": {"dateTime": "2026-09-15T16:00:00+05:30"}}
+    created = httpx.post(cal_url, headers=headers, json=probe, timeout=30)
+    if created.status_code == 200:
+        event_id = created.json().get("id")
+        back = httpx.get(f"{cal_url}/{event_id}", headers=headers, timeout=30)
+        if back.status_code == 200 and back.json().get("summary") == probe["summary"]:
+            print(f"  Calendar   OK  (event {event_id} created, read back, removed)")
+        else:
+            problems.append(f"Calendar read-back returned {back.status_code}: {back.text[:200]}")
+        httpx.delete(f"{cal_url}/{event_id}", headers=headers, timeout=30)
     else:
-        problems.append(f"Calendar returned {cal.status_code}: {cal.text[:200]}")
+        problems.append(f"Calendar returned {created.status_code}: {created.text[:200]}")
 
     append_env({"GOOGLE_REFRESH_TOKEN": payload["refresh_token"]})
     print("\nrefresh token written to .env (chmod 600, gitignored)")
@@ -192,7 +221,13 @@ def main() -> int:
             CODE_FILE.write_text(json.dumps(captured))
 
         server = HTTPServer(("127.0.0.1", PORT), _handler_for(state, captured, on_code))
-        server.handle_request()
+        # Serve until a callback carrying THIS state arrives, rather than exactly one
+        # request: a stale tab, a browser prefetch or a resent link would otherwise end the
+        # run with an empty capture and nothing recorded.
+        server.timeout = 5
+        deadline = time.time() + 900
+        while time.time() < deadline and not captured.get("code") and not captured.get("error"):
+            server.handle_request()
         if not captured.get("code"):
             CODE_FILE.unlink(missing_ok=True)
             sys.exit(f"no code returned: {captured.get('error') or 'unknown error'}")

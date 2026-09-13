@@ -29,6 +29,25 @@ from causal.adapters import CalendarLive, GmailLive, GoogleAuth, LinearLive  # n
 LIVE, UNCONFIGURED, FAILED = "LIVE", "UNCONFIGURED", "FAILED"
 
 
+def load_env() -> None:
+    """Read a `.env` in the repository root, without overwriting the real environment.
+
+    The credentials are documented as living in `.env` (gitignored, chmod 600), so a script
+    that only reads `os.environ` reports every surface UNCONFIGURED on a machine where they
+    are configured — which is a false negative on the one command whose job is to say what
+    is really reachable.
+    """
+    env = ROOT / ".env"
+    if not env.exists():
+        return
+    for line in env.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
 def _env(name: str) -> str:
     return (os.environ.get(name) or "").strip()
 
@@ -54,10 +73,16 @@ def check_linear(write: bool) -> tuple[str, str]:
         title = f"CAUSAL live verification {int(time.time())}"
         created = client.create_task(project="CAUSAL verification", title=title,
                                      intent_hash=probe)
+        # LinearLive returns the identifier under "id" (`SUB-5`), and an absent key would
+        # make the comparison below pass on None == None — a vacuous pass in the one script
+        # whose whole job is to say whether a surface really works.
+        made = (created or {}).get("id") or ""
+        if not made:
+            return FAILED, f"create_task returned no identifier: {created!r}"
         seen = client.list_tasks(intent_hash=probe)
-        if not any(t.get("id") == created.get("id") for t in seen):
-            return FAILED, "a created issue could not be read back"
-        return LIVE, f"wrote {created.get('identifier')} and read it back independently"
+        if not any(t.get("id") == made for t in seen):
+            return FAILED, f"issue {made} could not be read back"
+        return LIVE, f"wrote {made} and read it back independently"
     except Exception as exc:                                   # noqa: BLE001 - reported
         return FAILED, f"{type(exc).__name__}: {exc}"
 
@@ -91,10 +116,16 @@ def check_calendar(write: bool) -> tuple[str, str]:
         stamp = time.strftime("%Y-%m-%dT%H:%M")
         created = client.insert_event(title="CAUSAL live verification", start_iso=stamp,
                                       attendees=(),  intent_hash="verify-live")
+        # The event id lives under "id" in both the insert response and list_events. Reading
+        # "external_id" here found nothing on either side, so the equality below compared
+        # None to None and reported LIVE without proving anything was written.
+        made = (created or {}).get("id") or ""
+        if not made:
+            return FAILED, f"insert_event returned no event id: {created!r}"
         seen = client.list_events(intent_hash="verify-live")
-        if not any(e.get("external_id") == created.get("external_id") for e in seen):
-            return FAILED, "an inserted event could not be read back"
-        return LIVE, f"wrote {created.get('external_id')} and read it back independently"
+        if not any(e.get("id") == made for e in seen):
+            return FAILED, f"event {made} could not be read back"
+        return LIVE, f"wrote {made} and read it back independently"
     except Exception as exc:                                   # noqa: BLE001
         return FAILED, f"{type(exc).__name__}: {exc}"
 
@@ -128,13 +159,18 @@ def check_google_client() -> tuple[str, str]:
         payload = _json.loads(exc.read().decode() or "{}")
         err = payload.get("error", "")
         if err == "invalid_grant":
-            return LIVE, "credentials accepted by Google; only the consent click is missing"
+            # The client is valid. Whether a usable session exists is a separate question,
+            # answered by the refresh token's presence rather than assumed.
+            have = " and a refresh token is present" if _env("GOOGLE_REFRESH_TOKEN") \
+                else "; the consent click has not been done yet"
+            return LIVE, f"credentials accepted by Google{have}"
         return FAILED, f"Google rejected the client itself: {err or exc.code}"
     except Exception as exc:                                   # noqa: BLE001
         return FAILED, f"{type(exc).__name__}: {exc}"
 
 
 def main() -> int:
+    load_env()
     ap = argparse.ArgumentParser()
     ap.add_argument("--write", action="store_true", help="also create and read back")
     args = ap.parse_args()

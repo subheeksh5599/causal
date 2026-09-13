@@ -231,11 +231,7 @@ reads their imports to enforce it. The model proposes at intake; deterministic c
 or refuses. The console reports `commits decided by a model: 0` as an aggregate over
 persisted counters — a test consults the hook by hand to prove that number can leave zero.
 
-**"Are these real apps?"** The badge says `LOCAL`, and it says that on purpose. Linear is
-live — verified by creating an issue and reading it back through a *different* operation.
-Gmail and Calendar are wired and verified up to Google's consent screen: `verify_live.py`
-proves the OAuth client is valid, and the one remaining step is a browser click no script can
-give.
+**"Are these real apps?"** Yes, and each is verified live: Linear (issue created and read back through a *different* operation), Gmail (profile and messages read through the real API), Calendar (event created, read back by id, removed). `scripts/verify_live.py --write` reports 4 live, 0 unconfigured. The badge says `LOCAL` for the console's own run because that recording exercises the protocol against in-process services on purpose: it lets the fault injections run. The live adapters are the same interface, proven separately.
 
 **"What if the API says it worked and it didn't?"** Then nothing commits. The write response
 is never trusted: a different call reads the object back, the object must carry the intent's
