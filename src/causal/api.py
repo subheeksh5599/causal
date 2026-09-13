@@ -123,7 +123,8 @@ def intake_endpoint(body: dict) -> JSONResponse:
         text, proposer=proposer,
         recipients=("dana.reyes@acme.example", "sam.okafor@acme.example"))
     payload: dict = {"proposer": outcome.proposer, "proposal": outcome.raw,
-                     "accepted": outcome.intent is not None, "reasons": outcome.reasons}
+                     "accepted": outcome.intent is not None, "reasons": outcome.reasons,
+                     "intent": None}   # always present, so a client can rely on the shape
     if outcome.intent is not None:
         it = outcome.intent
         payload["intent"] = {
