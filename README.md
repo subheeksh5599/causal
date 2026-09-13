@@ -348,7 +348,7 @@ Same intent, two effects done, one held, commit refused with `AWAITING_APPROVAL`
 
 **A verification script reported a pass it had not earned.** `verify_live.py` compared `created.get("external_id")` with the read side's, and both are `None` — the adapters return `id` — so it compared `None == None` and printed LIVE without proving a write. Anywhere a check compares two dict fields: a key missing on both sides is an equality, not an error.
 
-**A verifier called every surface UNCONFIGURED on the machine where they were configured.** The credentials live in `.env`; the scripts read only `os.environ`, so the one command whose job is to say what is reachable said "nothing is". Both load `.env` via `os.environ.setdefault` now, so a real environment variable still wins.
+**A verifier once reported every surface UNCONFIGURED on the machine where they had just been configured** — since fixed. The credentials live in `.env`; the scripts read only `os.environ`, so the one command whose job is to say what is reachable answered "nothing is". Both load `.env` via `os.environ.setdefault` now, and the same command reports `4 live, 0 unconfigured, 0 failed`.
 
 **The table-of-contents generator deleted thirty sections of this file.** It rewrote "the block between the TOC heading and the next `---` rule" — and this file separates sections with headings, so the next rule was inside the Tests table. It bounds on the next heading and refuses the write if the heading count changes. A tool whose job is keeping this file honest has to be unable to eat it.
 
