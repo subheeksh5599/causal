@@ -41,3 +41,49 @@ def _fixture_clock() -> tuple[str, str, str, str]:
     wednesday = monday + timedelta(days=2)
     return (monday.isoformat(), f"{tuesday.isoformat()}T15:00",
             f"{tuesday.isoformat()}T16:00", f"{wednesday.isoformat()}T16:00")
+CONTACT = "buyer@acme.example"
+REFERENCE_DATE = "2026-09-14"
+TUESDAY = "2026-09-15T15:00"
+TUESDAY_LATE = "2026-09-15T16:00"
+WEDNESDAY = "2026-09-16T16:00"
+SEQUENCES = [
+    ("intended", "The intended path"),
+    ("timeout_after_write", "Timeout AFTER the write — reconciled, never retried blind"),
+    ("conflict", "Two intents, one business outcome — the second is refused"),
+    ("unauthorized_success", "The API succeeds and the action still fails"),
+    ("missing_evidence", "Evidence that does not exist — nothing executes"),
+    ("lying_model", "A model claiming total success changes nothing"),
+    ("crash_recovery", "Worker A dies holding the job — worker B takes over, no duplicate"),
+    ("duplicate_intent", "The same intent arrives twice while the lease is live"),
+    ("duplicate_before_commit", "An equivalent effect already exists — refuses to commit"),
+    ("duplicate_after_commit", "A duplicate appears after the commit — flagged, not undone"),
+    ("absence_not_provable", "Where absence cannot be proven, it never retries"),
+    ("counter_intent", "Renew and cancel contend for one contract"),
+    ("awaiting_signoff", "Outbound waits for a person; internal effects do not"),
+]
+ACME_PEOPLE = ("dana.reyes@acme.example", "sam.okafor@acme.example")
+def build_binding_intent(customer: str, project: str, start_iso: str, *, intent_id: str,
+                         event: str = "Kickoff", operation: str = "", resource: str = "",
+                         recipients: tuple[str, ...] = ACME_PEOPLE) -> Intent:
+    """An intent that names the real-world resource it contends for.
+
+    `resource`/`operation` are what the authored exclusivity relation is checked
+    against; they are deliberately not part of the conflict key.
+    """
+    scope = Scope(customer=customer, project=project, event=event, start_iso=start_iso,
+                  recipients=recipients,
+                  allowed_apps=("gmail", "calendar", "linear", "slack"),
+                  resource=resource, operation=operation)
+    effects = (
+        EffectSpec("CALENDAR-01", "calendar", "CREATE_EVENT"),
+        EffectSpec("LINEAR-01", "linear", "CREATE_ISSUE"),
+        EffectSpec("SLACK-01", "slack", "POST_MESSAGE"),
+    )
+    return Intent(intent_id=intent_id, request=f"{customer} approved the {project}.",
+                  scope=scope,
+                  authority={"approval": "gmail", "time": "gmail", "meeting": "calendar",
+                             "work": "linear"},
+                  effects=effects, conflict_key=conflict_key_for(scope))
+
+
+@dataclass
