@@ -16,17 +16,17 @@ from "the outcome happened".
 ## What it does
 
 CAUSAL sits between an agent and the apps it acts on and makes one promise it can prove:
-**an external effect is not done because it exists — it is done only if it is provably the
+**an external effect is not done because it exists, but only if it is provably the
 authorised, conflict-free consequence of exactly one frozen intent.**
 
 ```
 EFFECTED  ≠  VERIFIED  ≠  COMMITTED
 ```
 
-- **EFFECTED** — an external write appears to have occurred. This is what the writer says.
-- **VERIFIED** — an independent read, through a *different call than the writer used*,
+- **EFFECTED.** An external write appears to have occurred. This is what the writer says.
+- **VERIFIED.** An independent read, through a *different call than the writer used*,
   confirms the required postcondition. This is what the system says.
-- **COMMITTED** — every required effect is verified, conflict-free, causally bound to the
+- **COMMITTED.** Every required effect is verified, conflict-free, causally bound to the
   same frozen authorisation, and not expired. This is what the evidence says.
 
 A 200 response is sufficient for none of the three.
@@ -35,7 +35,7 @@ Three mechanisms carry that promise:
 
 1. **A frozen intent contract.** A request becomes a scope, an authority map, a set of
    required effects, and a conflict key. The authority map is an immutable mapping proxy at
-   freeze — no later code and no model can widen it while keeping a valid hash.
+   freeze. No later code and no model can widen it while keeping a valid hash.
 2. **Semantic effect binding.** With no idempotency key anywhere, CAUSAL computes a
    deterministic fingerprint of the intended effect and searches the surface for an
    equivalent that already exists. One match is bound and adopted, not duplicated. More than
@@ -47,7 +47,7 @@ Three mechanisms carry that promise:
 ## The three external apps, and why each one is load-bearing
 
 The requirement is a multi-step agent connected to at least three external apps. Three
-apps, three distinct roles — none of them decoration, because the problem CAUSAL solves
+apps, three distinct roles, none of them decoration, because the problem CAUSAL solves
 only exists when effects are spread across systems that share no transaction boundary.
 
 | App | Role in the job | What it proves |
@@ -75,7 +75,7 @@ demonstrated inside one app.
 | Linear is genuinely wired | issue created via GraphQL, then found through a *different* operation, plus a negative control that returns zero |
 
 **The reliability posture is refusal, not optimism.** Where absence of an effect cannot be
-proven — a surface with no way to enumerate its domain — CAUSAL returns `NOT_PROVABLE` and
+proven (a surface with no way to enumerate its domain), CAUSAL returns `NOT_PROVABLE` and
 does not retry. A duplicate appearing after a legitimate commit is flagged and escalated,
 never silently reversed. `AMBIGUOUS` stops and asks a human. There is no
 `COMMITTED_WITH_WARNINGS`.
@@ -88,7 +88,7 @@ never silently reversed. `AMBIGUOUS` stops and asks a human. There is no
 - **Gmail and Calendar are not live-exercised.** Their endpoints, headers and bodies are
   audited against Google's own contracts and the write/read tag agreement is proven offline
   (`tests/test_j_live_adapters.py`), and `scripts/live_run.py` drives the whole flagship
-  against the real apps on demand. What is missing is one browser consent, not code — so in
+  against the real apps on demand. What is missing is one browser consent, not code, so in
   a `LOCAL` run those two surfaces are in-process services and the badge says so.
 - **The store is single-host SQLite.** The uniqueness guarantee is a partial unique index in
   the database, real and single-machine.
@@ -101,19 +101,19 @@ never silently reversed. `AMBIGUOUS` stops and asks a human. There is no
   `uv sync && uv run pytest && uv run uvicorn causal.api:app --port 8000`
 - **Two-minute demo:** linked at the top of the README. Six clicks, walked in `DEMO.md`,
   and `scripts/demo_preflight.py` checks every number the script quotes, plus every label it
-  tells you to point at, against the running console — then resets the ledger so the console
+  tells you to point at, against the running console, then resets the ledger so the console
   is exactly in the state the script's first click assumes.
 - **This brief:** the system above, and the reliability story, in one page.
 - **One command that checks the other three:** `uv run python scripts/verify_all.py` runs
   the suite, the randomised campaign, the secret scan and the anchor check, and reads the
-  numbers printed in the README back against reality — failing if any of them has drifted.
+  numbers printed in the README back against reality, failing if any of them has drifted.
 
 ---
 
 ### Paste-ready short description
 
 CAUSAL gives AI agents idempotent commit semantics over APIs that provide no idempotency
-primitive — Gmail, Calendar and Linear — by binding an intent to an independently observed
+primitive (Gmail, Calendar and Linear) by binding an intent to an independently observed
 effect instead of trusting a response. It freezes an intent contract, executes against it,
 reads every effect back through a *different* call than the one that wrote it, proves each
 effect belongs to exactly one intent by semantic fingerprint, and refuses to commit when
