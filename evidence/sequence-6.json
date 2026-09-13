@@ -1,0 +1,15 @@
+{
+  "intent_id": "C-5001",
+  "intent_hash": "",
+  "status": "REFUSED",
+  "committed": false,
+  "refusal_code": "EVIDENCE_MISSING",
+  "reasons": [
+    "evidence source unreadable: gmail: no such message msg-absent"
+  ],
+  "evidence": {},
+  "effects": [],
+  "reconciliations": [],
+  "writes_attempted": 0,
+  "model_calls": 0
+}
