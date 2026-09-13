@@ -3,11 +3,14 @@
 Nothing here is estimated. If a counter is zero it is because no run produced a
 non-zero value, and the refusal rate is refusals divided by runs.
 """
+
 from __future__ import annotations
+
 import json
 import sqlite3
 import threading
 import time
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS outcomes (
     intent_id      TEXT PRIMARY KEY,
@@ -30,6 +33,8 @@ CREATE TABLE IF NOT EXISTS outcomes (
 MIGRATIONS = (
     "ALTER TABLE outcomes ADD COLUMN model_calls INTEGER NOT NULL DEFAULT 0",
 )
+
+
 class OutcomeStore:
     def __init__(self, path: str = "causal.db") -> None:
         self._lock = threading.RLock()
@@ -96,8 +101,7 @@ class OutcomeStore:
             effects = json.loads(row["effects_json"] or "[]")
             if any(e.get("state") == "POST_COMMIT_DUPLICATE" for e in effects):
                 post_commit_duplicates += 1
-            required = [e for e in effects if e.get("app") in ("calendar", "linear")]
-            if not required or any(e.get("state") not in acceptable for e in required):
+            if not effects or any(e.get("state") not in acceptable for e in effects):
                 false_commits += 1
 
         return {
