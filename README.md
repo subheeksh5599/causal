@@ -182,3 +182,154 @@ A deterministic execution layer that sits between an agent and the apps it acts 
 
 On top of that: a conflict registry that allows one active intent per real-world outcome, a hash-chained audit log, a natural-language intake where a model may propose a contract but cannot widen what is accepted, and a review page where a person approves anything that leaves the building.
 
+## Architecture
+
+```
+    request (words)
+         │
+         ▼
+   ┌─────────────┐   a proposer offers a contract; deterministic code
+   │  intake.py  │   accepts or refuses it. authority, conflict key,
+   └─────────────┘   postconditions and recipients are the operator's.
+         │
+         ▼
+   ┌─────────────┐   freeze: scope + authority map + required effects
+   │  intent.py  │   conflict_key = CUSTOMER::PROJECT::EVENT
+   └─────────────┘   (the disputed fact is deliberately NOT in the key)
+         │
+         ▼
+   ┌─────────────┐   one active intent per outcome, enforced by a partial
+   │ registry.py │   unique index in SQLite — not check-then-act
+   └─────────────┘
+         │
+         ▼
+   ┌─────────────┐   PLANNED ──▶ REQUESTED ──▶ EFFECTED ──▶ VERIFYING ──▶ VERIFIED
+   │  engine.py  │     │            │                        │
+   └─────────────┘     │            └──▶ UNKNOWN ──▶ RECONCILING
+         │             ├──▶ NOT_FOUND / NOT_PROVABLE / AMBIGUOUS
+         │             ├──▶ AWAITING_APPROVAL   (outbound, waits for a person)
+         │             └──▶ REJECTED / ESCALATED
+         ▼
+   ┌─────────────┐   gmail (authority) · calendar · linear
+   │  adapters   │   read path is a different call than the write path,
+   └─────────────┘   in every adapter, structurally
+         │
+         ▼
+   ┌─────────────┐   COMMITTED = authorized ∧ frozen ∧ preconditions satisfied
+   │ policy.py   │             ∧ no active conflict ∧ every required effect
+   └─────────────┘               VERIFIED ∧ causally bound ∧ not expired
+```
+
+| Module | Responsibility |
+|---|---|
+| `intent.py` | The contract: scope, authority mapping, required effects, canonical hashing, freeze |
+| `intake.py` | Natural language to contract; reserved fields a proposer may not set |
+| `policy.py` | Scope and operation policy, retry decisions, and `can_commit` — the only path to COMMITTED |
+| `registry.py` | One active intent per outcome, leases, takeover |
+| `ledger.py` | The effect state machine and the approvals table |
+| `binding.py` | Semantic fingerprints, the match hierarchy, the exclusivity relation |
+| `reconcile.py` | Deterministic reconciliation levels; `AMBIGUOUS` escalates |
+| `postconditions.py` | The registered checkers a required effect must satisfy |
+| `audit.py` | Hash-chained event log |
+| `plain.py` | The same states in words, for the review page |
+| `adapters.py` | Local fakes, live clients and twin clients behind one interface |
+
+`ARCHITECTURE.md` has the module map in full; `EVALUATION.md` has the fault matrix — for each fault, the external state, the CAUSAL state, and the behaviour that is required.
+
+## The commit loop, step by step
+
+The order is fixed and it is the product:
+
+1. **Expiry** — an intent whose authorisation window has passed is refused before anything else happens.
+2. **Evidence gate** — the approval message is fetched and adjudicated by deterministic checks. The model is not consulted.
+3. **Authority check** — every app the intent will touch must appear in the frozen authority mapping.
+4. **Freeze** — the contract is hashed. After this point the authority map is a mapping proxy and `set_authority` raises.
+5. **Scope check** — out-of-scope targets and unknown operations are refused before any adapter is consulted.
+6. **Conflict claim** — the conflict key is registered. A second intent on a live outcome is refused, not queued.
+7. **Plan** — the required effects are enumerated with their checkers. A required effect with no registered checker is refused rather than passed.
+8. **Execute** — each effect is written once. `UNKNOWN` (written, response lost) never retries; it reconciles.
+9. **Bind** — the effect must be searchable back out of the surface and belong to exactly one candidate. More than one candidate is `AMBIGUOUS`, and `AMBIGUOUS` refuses.
+10. **Independent verify** — a different call than the writer used reads the object back and checks the registered postcondition.
+11. **Commit gate** — `can_commit` is the only path to `COMMITTED`:
+
+```
+COMMITTED = authorized ∧ authority frozen ∧ preconditions satisfied
+          ∧ no active conflict ∧ every required effect VERIFIED
+          ∧ every effect causally bound to the intent ∧ not expired
+```
+
+There is no `COMMITTED_WITH_WARNINGS`. Either the required outcome is proven or the intent is refused and says why. An outbound effect that reaches the outside world is held in `AWAITING_APPROVAL` until a named human approves it — and the commit gate then refuses the intent, because a required effect is not verified.
+
+## The three apps
+
+Three surfaces, chosen because they share no transaction boundary with each other or with CAUSAL.
+
+| App | Role | Read path vs write path |
+|---|---|---|
+| **Gmail** | The authority. The approval message is the evidence that authorises the whole intent, and it also adjudicates the disputed fact — a date in the message beats a date in a model's plan | `read_message` / `list_messages` versus nothing: CAUSAL never writes to the authority |
+| **Calendar** | The scheduling effect, and the one that carries the disputed fact | `insert_event` versus `list_events` — different endpoint, and objects carry the intent's tag |
+| **Linear** | The work effect, and the only surface verified live | `create_task` versus `list_tasks` — a different GraphQL operation, filtered on the intent's hash |
+
+**Linear is really wired.** Issue `SUB-5` was created through `issueCreate`, found again through a `filter: description contains` query — a different operation — and a hash that was never written returns zero, so the read is not simply returning everything. That is the difference between an adapter and a demo.
+
+Gmail and Calendar are written against documented request shapes. Their endpoints, headers
+and bodies have been audited against Google's own contracts, and `scripts/live_run.py`
+drives the whole flagship against the real three apps — search the mailbox, read the
+approval, take the start time the approval states, then write Calendar and Linear and read
+each back. It refuses cleanly and writes nothing until the consent exists, so the only
+missing step is a browser click. `scripts/verify_live.py` proves the OAuth client is valid
+and reports the surfaces as UNCONFIGURED rather than implying coverage. The environment
+badge says `LOCAL` because that is the truth.
+
+## Where the guarantee is enforced
+
+Three places, and none of them is a convention.
+
+- **The state machine.** Twelve states, legal transitions only. `PLANNED → VERIFIED` raises rather than silently succeeding, and leaving `VERIFIED` requires an audited invalidation. The suite checks the count is exactly twelve and that a model claiming success cannot cause any transition at all.
+- **The commit gate.** `policy.can_commit` is a pure function over the ledger's state. It never reads a response body, a planner output or a webhook, because it is not given one.
+- **The audit chain.** Every state change is appended to a hash-chained log, so the record of what happened cannot be edited without detection. Verified by editing a row and watching both checks fail:
+
+```
+intact, per-intent: True      whole log: True
+after editing a row, per-intent: False      whole log: False
+```
+
+## What the binding layer measures
+
+The claim is not "we find something similar", it is "we can prove which external effect is ours, and we refuse when we cannot". Four rates, computed in `tests/test_g_binding.py` over a seeded suite rather than asserted in prose:
+
+```
+semantic recovery      100%   of crash-after-write cases where the effect exists
+                              but carries no tag of ours — bound, not duplicated
+false binding            0%   on near-misses sharing customer, project, title and
+                              attendees, differing only by a day. A false bind is
+                              the worst outcome available: it commits an intent
+                              whose effect never happened.
+duplicate prevention   100%   two workers, one real-world effect
+ambiguity refusal      100%   two equivalent candidates, never guessed between
+```
+
+And the randomised campaign: **100 runs, 48 fault combinations, zero invariant violations**, including invariants for bindable effects, ambiguous effects, and the ban on retrying anything that ended `NOT_PROVABLE`.
+
+`scripts/campaign.py` injects faults (lost responses, duplicates, foreign objects, ambiguous pairs) across random customers, projects and times, then asserts the invariants per run. The artifact is `evidence/campaign.json`.
+
+## Where the model sits
+
+Two places, and neither is the decision path.
+
+**Intake.** A request in words becomes a frozen contract. A proposer reads the sentence and offers a proposal; deterministic validation accepts or refuses it. The proposer can be a model (`CAUSAL_MODEL_URL` + `CAUSAL_MODEL_KEY`) or the shipped rule parser, and swapping them cannot widen what the system accepts — that is a test, not a hope.
+
+```
+$ curl -s localhost:8000/api/intake -d '{"text":"Acme approved the renewal. Schedule
+  the renewal kickoff 2026-10-07T15:00 and open the renewal task.","adversarial":true}' \
+  -H 'content-type: application/json' | jq .reasons
+[
+  "proposal sets 'authority': the authority mapping is the operator's, so a proposal may not set it",
+  "proposal sets 'recipients': who gets notified is an operator decision, never a proposer's"
+]
+```
+
+Six fields are reserved: `authority`, `conflict_key`, `postconditions`, `intent_hash`, `status`, `recipients`. A proposal that reaches for any of them is refused on the field. A model that reroutes which system adjudicates the work, or widens who gets contacted, fails at the boundary rather than at review.
+
+**Diagnosis.** Nowhere. The engine has no model call site at all, which `test_f_campaign.py::test_no_model_client_is_imported_in_the_decision_path` enforces by reading the imports of the five decision modules. The `lying_model` sequence attaches a counting planner to the engine and reports its call count, so "commits decided by a model: 0" is an aggregate over persisted per-run counters rather than a number written into the metrics function — and a test consults the hook by hand to prove the counter can leave zero.
+
