@@ -35,7 +35,7 @@ AWAITING_APPROVAL = "AWAITING_APPROVAL"
 # other effect stays autonomous. Empty by default: this is the operator's declaration
 # about their own systems, not a default this project should impose. The console's
 # sign-off sequence declares {"slack"} to demonstrate it.
-SIGNOFF_REQUIRED_APPS: set[str] = {"slack"}
+SIGNOFF_REQUIRED_APPS: set[str] = set()
 
 
 @dataclass
