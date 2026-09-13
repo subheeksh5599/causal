@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """The one command a judge runs to check every claim in this repository.
 
     uv run python scripts/verify_all.py            # everything
@@ -11,18 +12,25 @@ stale count in a metric, and twice during this build a hand-copied number went w
 
 Exit codes: 0 all gates passed · 1 a gate failed · 2 the environment is wrong (bad cwd).
 """
+
 from __future__ import annotations
+
 import argparse
 import re
 import subprocess
 import sys
 from pathlib import Path
+
 ROOT = Path(__file__).resolve().parents[1]
 README = ROOT / "README.md"
 PLACEHOLDER = "PASTE_VIDEO_LINK_HERE"
+
+
 def run(args: list[str], timeout: int = 900) -> tuple[int, str]:
     proc = subprocess.run(args, cwd=ROOT, capture_output=True, text=True, timeout=timeout)
     return proc.returncode, proc.stdout + proc.stderr
+
+
 class Report:
     def __init__(self) -> None:
         self.rows: list[tuple[str, bool, str]] = []
@@ -34,6 +42,8 @@ class Report:
     @property
     def failed(self) -> list[str]:
         return [g for g, ok, _ in self.rows if not ok]
+
+
 def count_tests() -> tuple[int, str]:
     """How many tests exist, and whether they all pass.
 
@@ -45,6 +55,8 @@ def count_tests() -> tuple[int, str]:
     _, collected = run(["uv", "run", "pytest", "tests/", "--collect-only", "-q"])
     per_file = [int(n) for n in re.findall(r"^tests/[\w_]+\.py: (\d+)$", collected, re.M)]
     return sum(per_file), out if code != 0 else ""
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--quick", action="store_true", help="skip the 100-run campaign")
@@ -89,12 +101,12 @@ def main() -> int:
                    "100 runs" if clean else "a run violated an invariant")
 
     # 4. no credential anywhere it could be pushed
-    code, out = run(["uv", "run", "python", "scripts", "secret_scan.py"])
+    code, out = run(["uv", "run", "python", "scripts/secret_scan.py"])
     report.add("secret scan clean", code == 0 and "clean" in out,
                out.strip().splitlines()[-1][:60] if out.strip() else "no output")
 
     # 5. the README's own navigation works
-    code, out = run(["uv", "run", "python", "scripts", "readme_toc.py", "--check"])
+    code, out = run(["uv", "run", "python", "scripts/readme_toc.py", "--check"])
     report.add("README anchors resolve",
                code == 0 and "every anchor resolves" in out,
                "all anchors" if code == 0 else (out.strip().splitlines()[-1][:60] or "no output"))
@@ -110,5 +122,7 @@ def main() -> int:
         return 1
     print(f"all {len(report.rows)} gates passed.")
     return 0
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
