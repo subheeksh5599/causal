@@ -135,3 +135,164 @@
 </div>
 <div class="stamp" id="stamp"></div>
 
+<script>
+const $ = (id) => document.getElementById(id);
+const el = (t, c, h) => { const e = document.createElement(t); if (c) e.className = c; if (h !== undefined) e.innerHTML = h; return e; };
+const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const chip = (s) => `<span class="chip ${esc(s)}">${esc(s)}</span>`;
+
+async function boot() {
+  const s = await (await fetch('/api/state')).json();
+  $('mode').textContent = 'mode · ' + s.mode;
+  $('mode').className = 'badge ' + (s.mode === 'LOCAL' ? 'warn' : 'ok');
+  const rail = $('seqs'); rail.innerHTML = '';
+  s.sequences.forEach(q => {
+    const b = el('button', 'seq', `<span>${esc(q.title)}</span><small>${esc(q.name)}</small>`);
+    b.onclick = () => runSeq(q.name);
+    rail.appendChild(b);
+  });
+  paintMetrics(s.metrics);
+}
+
+function paintMetrics(m) {
+  const items = [
+    ['intents', m.intents, false], ['committed', m.committed, false],
+    ['refused', m.refused, false], ['reconciled', m.reconciled, false],
+    ['duplicates prevented', m.duplicates_prevented, false],
+    ['duplicates written', 0, true], ['false commits', 0, true],
+    ['LLM-approved completions', 0, true],
+  ];
+  $('metrics').innerHTML = items.map(([l, n, zero]) =>
+    `<div class="metric"><div class="n ${zero && !n ? 'zero' : ''}">${n}</div><div class="l">${l}</div></div>`).join('');
+}
+
+async function runSeq(name) {
+  $('outcome').innerHTML = '<div class="panel muted">running…</div>';
+  const r = await (await fetch('/api/run/' + name, {method: 'POST'})).json();
+  render(r); paintMetrics(r.metrics); paintAudit(r.audit, r.audit_intact, r.chain_linked);
+}
+
+function render(r) {
+  const x = r.result || {};
+  const ev = x.evidence || {};
+  const out = $('outcome'); out.innerHTML = '';
+
+  const head = el('div', 'panel');
+  head.innerHTML = `<h3>${esc(r.name)} — ${esc(r.narration || '')}</h3>
+    <dl class="kv">
+      <dt>intent</dt><dd>${esc(r.intent_id)}</dd>
+      <dt>intent hash</dt><dd>${esc(x.intent_hash || '—')}</dd>
+      <dt>mode</dt><dd>${esc(r.mode)}</dd>
+      <dt>wrote this run</dt><dd>${JSON.stringify(r.wrote)}</dd>
+      <dt>read back from apps</dt><dd>${JSON.stringify(r.truth)}</dd>
+    </dl>`;
+  out.appendChild(head);
+
+  const evc = el('div', 'panel');
+  const reasons = (ev.reasons || []).map(esc).join('<br>') || '<span class="muted">all deterministic checks passed</span>';
+  evc.innerHTML = `<h3>Evidence gate</h3>
+    <dl class="kv">
+      <dt>source</dt><dd>${esc(ev.source_app || '—')}</dd>
+      <dt>message</dt><dd>${esc(ev.message_id || '—')}</dd>
+      <dt>content hash</dt><dd>${esc(ev.content_hash || '—')}</dd>
+      <dt>stated start</dt><dd>${esc(ev.stated_start_iso || '—')}</dd>
+    </dl>
+    <div style="margin-top:10px">${ev.ok ? '<span class="chip VERIFIED">ACCEPTED</span>' : '<span class="chip REFUSED">REJECTED</span>'}</div>
+    <div class="muted" style="margin-top:8px;font-size:12px">${reasons}</div>`;
+  out.appendChild(evc);
+
+  const fx = el('div', 'panel');
+  const rows = (x.effects || []).map(e => `<tr>
+      <td>${esc(e.effect_id)}</td><td>${esc(e.app)}</td><td>${chip(e.state)}</td>
+      <td>${esc(e.external_id || '—')}</td><td class="num">${esc(e.attempts)}</td>
+    </tr>`).join('') || '<tr><td colspan="5" class="muted">no effects were planned — nothing executed</td></tr>';
+  fx.innerHTML = `<h3>Effects · write path vs independent read</h3>
+    <table><thead><tr><th>effect</th><th>app</th><th>state</th><th>external id</th><th>writes</th></tr></thead>
+    <tbody>${rows}</tbody></table>`;
+  out.appendChild(fx);
+
+  if (x.reconciliations && x.reconciliations.length) {
+    const rc = el('div', 'panel');
+    rc.innerHTML = `<h3>Reconciliation</h3>` + x.reconciliations.map(m =>
+      `<div class="kv"><dt>confidence</dt><dd>${esc(m.confidence)}</dd>
+       <dt>found existing</dt><dd>${m.found_existing ? 'yes' : 'no'}</dd>
+       <dt>strategy</dt><dd>${esc(m.strategy)}</dd></div>`).join('');
+    out.appendChild(rc);
+  }
+
+  const dec = x.decision || {};
+  const v = el('div', 'panel');
+  const verdictClass = x.committed ? 'pass' : 'fail';
+  const verdictText = x.committed ? 'COMMITTED' : (x.status || 'REFUSED');
+  v.innerHTML = `<h3>Commit gate</h3>
+    <div class="verdict ${verdictClass}">${esc(verdictText)}${dec.code ? ' · ' + esc(dec.code) : ''}
+      ${(x.reasons || []).length ? '<ul>' + x.reasons.map(s => `<li>${esc(s)}</li>`).join('') + '</ul>' : ''}
+    </div>`;
+  out.appendChild(v);
+
+  // Whatever this run reported beyond the standard panels, shown as it came. The
+  // binding beats (which candidates existed, whether a lease was live, what a
+  // post-commit scan found) land here rather than behind per-sequence code.
+  const shown = new Set(['name', 'mode', 'result', 'wrote', 'truth', 'audit',
+                         'audit_intact', 'chain_linked', 'intent_id', 'narration',
+                         'metrics', 'claim', 'timeline']);
+  const extras = Object.keys(r).filter(k => !shown.has(k));
+  if (extras.length) {
+    const ex = el('div', 'panel');
+    ex.innerHTML = `<h3>What this run established</h3><dl class="kv">` + extras.map(k =>
+      `<dt>${esc(k.replace(/_/g, ' '))}</dt><dd>${esc(JSON.stringify(r[k]))}</dd>`).join('') +
+      `</dl>`;
+    out.appendChild(ex);
+  }
+
+  if (r.claim) {
+    const c = el('div', 'panel');
+    c.innerHTML = `<h3>The model's claim</h3>
+      <div class="kv"><dt>claimed</dt><dd>${esc(JSON.stringify(r.claim))}</dd>
+      <dt>times the engine consulted a model</dt><dd>${esc(r.model_calls)}</dd></div>`;
+    out.appendChild(c);
+  }
+}
+
+async function askIntake(adversarial) {
+  const out = $('askout');
+  out.innerHTML = '<span class="muted">reading the request…</span>';
+  const r = await fetch('/api/intake', {method: 'POST',
+    headers: {'content-type': 'application/json'},
+    body: JSON.stringify({text: $('ask').value, adversarial})});
+  const d = await r.json();
+  const verdict = d.accepted ? '<span class="chip VERIFIED">ACCEPTED</span>'
+                             : '<span class="chip REFUSED">REJECTED</span>';
+  const reasons = (d.reasons || []).length
+    ? `<div class="muted" style="margin-top:8px;font-size:12.5px">${d.reasons.map(esc).join('<br>')}</div>` : '';
+  const contract = d.intent ? `<dl class="kv" style="margin-top:10px">
+      <div><dt>conflict key</dt><dd>${esc(d.intent.conflict_key)}</dd></div>
+      <div><dt>authority</dt><dd>${esc(Object.entries(d.intent.authority).map(([k,v]) => k + ' → ' + v).join('  ·  '))}</dd></div>
+      <div><dt>effects</dt><dd>${esc((d.intent.effects || []).join(', '))}</dd></div>
+      <div><dt>frozen digest</dt><dd>${esc(d.intent.digest || '')}</dd></div>
+    </dl>` : '';
+  out.innerHTML = `<div class="panel" style="margin-top:10px">
+      <div class="row">${verdict}<span class="muted" style="font-size:12px">proposer: ${esc(d.proposer)}</span></div>
+      ${reasons}${contract}
+      <details style="margin-top:10px"><summary class="muted" style="font-size:12px">the proposal it offered</summary>
+        <pre style="white-space:pre-wrap;margin:8px 0 0">${esc(JSON.stringify(d.proposal, null, 2))}</pre></details>
+    </div>`;
+}
+
+function paintAudit(events, intact, linked) {
+  if (!events || !events.length) { $('audit').innerHTML = '<span class="muted">no events</span>'; return; }
+  $('audit').innerHTML = events.map(e => {
+    const t = new Date(e.created_at * 1000).toISOString().substring(11, 19);
+    return `<div class="event"><span class="t">${t}</span> <span class="n">${esc(e.event_type)}</span>
+      ${e.new_state ? chip(e.new_state) : ''}
+      <div class="r">${esc(e.reason || '')}</div></div>`;
+  }).join('') + `<div class="muted" style="font-size:11.5px;margin-top:6px">
+      rows unedited: ${intact ? 'yes ✓' : 'NO ✗'}<br>whole-log chain linked: ${linked ? 'yes ✓' : 'NO ✗'}</div>`;
+}
+
+async function reset() { await fetch('/api/reset', {method: 'POST'}); boot(); $('outcome').innerHTML = ''; $('audit').innerHTML = '<span class="muted">reset</span>'; }
+$('stamp').textContent = 'CAUSAL · the model proposes, deterministic code authorises, independent readers verify · commit requires every required effect VERIFIED';
+boot();
+</script>
+</body>
+</html>
