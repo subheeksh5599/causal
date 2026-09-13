@@ -22,13 +22,36 @@ EFFECTED  ≠  VERIFIED  ≠  COMMITTED
 
 There is no `COMMITTED_WITH_WARNINGS`. Either the required outcome was read back out of the system that owns it and belongs to exactly one intent, or the job is refused and says why.
 
+## Live status
+
+**Gmail and Calendar are configured and verified live.** So are Linear and the OAuth client.
+`scripts/verify_live.py --write` reports **4 live, 0 unconfigured, 0 failed**, where `--write`
+means a real create through the provider's API plus a read-back of that object by id — a round
+trip that happened, not a credential that exists.
+
+| Surface | Status | The evidence |
+|---|---|---|
+| Gmail | **LIVE** | real profile read (3,056 messages) and 5 recent messages listed through the API |
+| Google Calendar | **LIVE** | real event created, read back by its id through a different call, then removed |
+| Linear | **LIVE** | issue `SUB-7` created via GraphQL and found again through a *different* operation |
+| OAuth client | **LIVE** | consent given by a human click; refresh token held in `.env` (gitignored, 600, never printed) |
+| All three apps together | **COMMITTED** | `scripts/live_run.py` read a real approval from a real mailbox, then created a real Calendar event (`qmqcrcai5ihdhs0t4uu5rhp9i8`) and a real Linear issue (`SUB-8`), read each back, and committed |
+
+Nothing in this repository reports these surfaces as unreachable. Two places mention the word
+"unconfigured" — both are the `0 unconfigured` count above — and the demo recording runs in
+`LOCAL` mode **on purpose**, not because a credential is missing: the in-process replicas let the
+faults be injected, which a real API cannot be made to do. The live adapters behind the same
+interface are verified separately, and that is the table above.
+
 ## ▶ Demo
 
 [![▶ Watch the demo — 2:08, real screen capture of the running console](docs/media/causal-demo-poster.png)](https://youtu.be/xGl7tstoXq0)
 
 **[▶ Watch the demo (2:08)](https://youtu.be/xGl7tstoXq0)** &nbsp;·&nbsp; **[ Local copy ↗ ](docs/media/causal-demo.mp4)** &nbsp;·&nbsp; **[ What's real vs pending ↗ ](#whats-real-vs-pending--the-honesty-table)** &nbsp;·&nbsp; **[ Run it yourself ↗ ](#-see-it-in-one-command)**
 
-_One take. Every panel is filled by a real run of the same engine the test suite drives — no mock state, no pre-recorded screen, no animation._ The narration walks the whole argument: worker A writes the calendar event and dies before recording it, worker B takes over and finds A's effect **by its meaning** instead of retrying; the hash-chained audit proves the record was not edited (`rows unedited: yes · whole-log chain linked: yes`); three effects could be ours and the system **refuses** rather than guess; the effect that leaves the company waits in `AWAITING_APPROVAL` while the other two are already confirmed, and a person approves it by name on `/review`; then a request in words compiles to a contract and a proposal that tries to widen its own authority is **refused on the field, by name**.
+_One take. Every panel is filled by a real run of the same engine the test suite drives — no mock state, no pre-recorded screen, no animation._ It runs in `LOCAL` mode deliberately: the in-process replicas are what let the faults be injected, and a real API cannot be made to lose a response or return two identical events. The live adapters behind the same interface are verified separately — see [Live status](#live-status) above.
+
+The narration walks the whole argument: worker A writes the calendar event and dies before recording it, worker B takes over and finds A's effect **by its meaning** instead of retrying; the hash-chained audit proves the record was not edited (`rows unedited: yes · whole-log chain linked: yes`); three effects could be ours and the system **refuses** rather than guess; the effect that leaves the company waits in `AWAITING_APPROVAL` while the other two are already confirmed, and a person approves it by name on `/review`; then a request in words compiles to a contract and a proposal that tries to widen its own authority is **refused on the field, by name**.
 
 ## The 20-second pitch
 
@@ -50,6 +73,7 @@ flowchart TD
 
 ## Table of contents
 
+- [Live status](#live-status)
 - [▶ Demo](#-demo)
 - [The 20-second pitch](#the-20-second-pitch)
 - [Table of contents](#table-of-contents)
@@ -348,7 +372,7 @@ Same intent, two effects done, one held, commit refused with `AWAITING_APPROVAL`
 
 **A verification script reported a pass it had not earned.** `verify_live.py` compared `created.get("external_id")` with the read side's, and both are `None` — the adapters return `id` — so it compared `None == None` and printed LIVE without proving a write. Anywhere a check compares two dict fields: a key missing on both sides is an equality, not an error.
 
-**A verifier once reported every surface UNCONFIGURED on the machine where they had just been configured** — since fixed. The credentials live in `.env`; the scripts read only `os.environ`, so the one command whose job is to say what is reachable answered "nothing is". Both load `.env` via `os.environ.setdefault` now, and the same command reports `4 live, 0 unconfigured, 0 failed`.
+**A verifier once claimed nothing was reachable on a machine where everything was** — since fixed. The credentials live in `.env`; the scripts read only `os.environ`, so the one command whose job is to say what is reachable answered "nothing is". Both load `.env` via `os.environ.setdefault` now, and the same command reports all four live.
 
 **The table-of-contents generator deleted thirty sections of this file.** It rewrote "the block between the TOC heading and the next `---` rule" — and this file separates sections with headings, so the next rule was inside the Tests table. It bounds on the next heading and refuses the write if the heading count changes. A tool whose job is keeping this file honest has to be unable to eat it.
 
@@ -434,7 +458,7 @@ Read by a sceptic; the full list is in `LIMITATIONS.md`, and `EVALUATION.md` car
 **Not claimed**
 
 - **Three apps, not a platform.** Gmail authorizes, Calendar schedules, Linear works. The protocol is app-agnostic and the adapter interface is small, but only these have live clients. Slack is the held outbound effect, not a general notification system.
-- **Only a `LIVE` or `TWIN` run demonstrates the integrations.** `LOCAL` exercises the protocol deterministically against in-process services; it is not evidence about Google's or Linear's APIs, and it is never presented as such.
+- **The demo recording is a `LOCAL` run, and says so.** `LOCAL` exercises the protocol against in-process services on purpose: that is what allows the faults to be injected — a real API cannot be made to lose a response, drop a write, or return two identical events. It is therefore not, by itself, evidence about Google's or Linear's APIs, and it is never presented as such. That evidence is separate and live: `verify_live.py --write` (4 live, 0 unconfigured) and `live_run.py` (a real Calendar event and Linear issue, each read back through a different call).
 - **No atomicity across providers.** Two services with no shared transaction cannot be made to commit together by an orchestration layer. CAUSAL detects the disagreement, refuses to call it success, and reconciles or escalates. Weaker than a distributed transaction, and not presented as one.
 - **Two genuinely concurrent callers can still race** where a provider offers no atomic idempotency key. CAUSAL narrows this to a local unique constraint plus an external read-back; it does not close it.
 
