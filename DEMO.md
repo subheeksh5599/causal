@@ -47,9 +47,9 @@ document's order, film the clicks, upload, and replace the two `youtu.be` links 
 uv run python scripts/verify_all.py
 ```
 
-`demo video link is present` fails if the README carries no video link at all or still carries
-the `PASTE_VIDEO_LINK_HERE` placeholder, so the repository cannot be submitted with an empty
-slot in it. A GitHub issue/PR upload
+`demo video link is present` fails if the README carries no video link at all, or if it still
+carries the unfilled-link marker, so the repository cannot be submitted with an empty slot in
+it. A GitHub issue/PR upload
 (`https://github.com/user-attachments/assets/...`) renders as an inline player; a YouTube
 (unlisted) or Loom link also works and reads better on the submission form.
 
