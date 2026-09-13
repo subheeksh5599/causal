@@ -13,15 +13,16 @@ cd causal
 uv run uvicorn causal.api:app --port 8000
 ```
 
-Open `http://127.0.0.1:8000` in one tab and `http://127.0.0.1:8000/review` in a second.
+Open the console at **`http://127.0.0.1:8000/fresh`** and the review page at
+`http://127.0.0.1:8000/review`.
 
-Press **reset ledger** once. The header then reads `ledger · fresh` and the amber bar
-disappears. **Every number below assumes that state.** If the header instead reads
-`ledger · 3 intents · 2 committed` under an amber bar saying *This ledger already has
-history*, press **reset ledger** before you record.
+That one URL empties the ledger and lands you on the console, so it is already in the state
+every number below assumes. The header reads `ledger · fresh`. A plain `/` keeps the old
+ledger on purpose — that is why it shows `ledger · 5 intents · 1 committed` under an amber
+bar, and why a button pressed there answers `IDEMPOTENT` instead of doing the work again.
 
-Then do not press it again: the counters are the real objects in the world, so a second
-press reports different numbers, honestly.
+Do not press reset once you start: the counters are the real objects in the world, so a
+second press reports different numbers, honestly.
 
 Then prove the script still matches the console:
 
@@ -177,7 +178,8 @@ click the button again.
 
 `demo_preflight.py` resets the ledger as its last step for exactly this reason: after it
 prints `all match`, the console is in the state the first click needs, so press record
-without touching anything else.
+without touching anything else. Opening `http://127.0.0.1:8000/fresh` at any time does the
+same thing.
 
 ---
 

@@ -92,6 +92,7 @@
   <span class="badge" id="ledger">ledger …</span>
   <span class="badge" id="mode">mode …</span>
   <span class="badge ok" id="apps">gmail · calendar · linear</span>
+  <a class="badge" id="freshlink" href="/fresh" style="text-decoration:none">fresh ledger ↺</a>
   <a class="badge" href="/review" style="text-decoration:none">review jobs &rarr;</a>
 </header>
 
@@ -193,7 +194,8 @@ function paintLedger(m) {
   warn.style.display = used ? 'block' : 'none';
   if (used) {
     warn.innerHTML = `<b>This ledger already has history.</b> The demo script's numbers assume `
-      + `a fresh one — press <b>reset ledger</b> before recording, and not again afterwards.`;
+      + `a fresh one — open <a href="/fresh" style="color:#ffd9a0">/fresh</a> (or press `
+      + `<b>reset ledger</b>) before recording, and not again afterwards.`;
   }
 }
 

@@ -12,7 +12,7 @@ import os
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from . import audit as A
 from . import intake
@@ -40,6 +40,19 @@ def stack():
 @app.get("/", response_class=HTMLResponse)
 def console() -> HTMLResponse:
     return HTMLResponse(CONSOLE.read_text())
+
+
+@app.get("/fresh")
+def fresh() -> RedirectResponse:
+    """The demo-ready console: empties the ledger, then lands on `/`.
+
+    Every number in DEMO.md assumes an empty ledger, and a used one is invisible until the
+    counts look wrong — so the setup step is one URL instead of a button somebody has to
+    remember. A plain `/` still shows the persistent ledger, which is what a judge
+    inspecting prior state should get.
+    """
+    reset()
+    return RedirectResponse(url="/", status_code=303)
 
 
 @app.get("/review", response_class=HTMLResponse)

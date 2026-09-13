@@ -37,7 +37,7 @@ CONSOLE_LABELS = (
     "Invariant counters", "Audit chain",
     # the fresh/dirty ledger indicator, without which a recorder cannot tell that the
     # numbers they are about to quote depend on an empty ledger
-    "This ledger already has history", "ledger · fresh",
+    "This ledger already has history", "ledger · fresh", "fresh ledger",
 )
 REVIEW_LABELS = (
     # static markup only: the job headlines are composed at runtime by plain.job_view and
@@ -164,8 +164,12 @@ def main() -> int:
     print("\nleave the ledger ready to record:")
     # The walk above proves the numbers, but it also leaves 3 intents and 2 commits behind.
     # Recording from that state is what makes the first button report IDEMPOTENT with
-    # `matching events: 5` instead of COMMITTED with 1 — so the walk puts the ledger back.
-    check("ledger reset for recording", call("POST", f"{b}/api/reset").get("ok"), True)
+    # `matching events: 5` instead of COMMITTED with 1 — so the walk puts the ledger back,
+    # through the same URL a human would open rather than the API, so that path is walked too.
+    dirty = call("GET", f"{b}/api/state").get("metrics", {})
+    check("the walk left the ledger dirty", (dirty.get("intents") or 0) > 0, True)
+    with urllib.request.urlopen(f"{b}/fresh", timeout=30) as resp:
+        check("GET /fresh lands on the console", resp.status, 200)
     fresh = call("GET", f"{b}/api/state").get("metrics", {})
     check("ledger is empty", fresh.get("intents"), 0)
     check("nothing is committed", fresh.get("committed"), 0)
