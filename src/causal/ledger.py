@@ -7,10 +7,13 @@ COMMITTED is a property of the intent, not of an effect.
 An effect cannot jump PLANNED -> VERIFIED, and a VERIFIED effect cannot quietly
 go back to REQUESTED. Both are tested.
 """
+
 from __future__ import annotations
+
 import sqlite3
 import threading
 import time
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS effects (
     intent_hash     TEXT NOT NULL,
@@ -51,6 +54,7 @@ CREATE TABLE IF NOT EXISTS approvals (
     PRIMARY KEY (intent_hash, effect_id)
 );
 """
+
 PLANNED = "PLANNED"
 REQUESTED = "REQUESTED"
 EFFECTED = "EFFECTED"
@@ -72,7 +76,10 @@ NOT_PROVABLE = "NOT_PROVABLE"
 # and cannot delete, so the effect is flagged and escalated rather than rewritten.
 POST_COMMIT_DUPLICATE = "POST_COMMIT_DUPLICATE"
 # An effect that reaches the outside world waits here for a human. Nothing else does.
+AWAITING_APPROVAL = "AWAITING_APPROVAL"
+
 TERMINAL = {VERIFIED, REJECTED, ESCALATED, POST_COMMIT_DUPLICATE}
+
 LEGAL_TRANSITIONS: dict[str, set[str]] = {
     # PLANNED -> RECONCILING is the takeover path: a worker inheriting an intent the
     # previous worker may have acted on has an unknown outcome to settle before it
@@ -98,8 +105,12 @@ LEGAL_TRANSITIONS: dict[str, set[str]] = {
 # states from which a duplicate write is forbidden until reconciliation completes
 NO_RETRY_STATES = {UNKNOWN, RECONCILING, AMBIGUOUS, VERIFYING, EFFECTED, VERIFIED,
                    NOT_PROVABLE, POST_COMMIT_DUPLICATE, AWAITING_APPROVAL}
+
+
 class IllegalTransition(RuntimeError):
     pass
+
+
 class EffectLedger:
     def __init__(self, path: str = "causal.db") -> None:
         self._lock = threading.RLock()
