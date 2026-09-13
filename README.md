@@ -333,3 +333,116 @@ Six fields are reserved: `authority`, `conflict_key`, `postconditions`, `intent_
 
 **Diagnosis.** Nowhere. The engine has no model call site at all, which `test_f_campaign.py::test_no_model_client_is_imported_in_the_decision_path` enforces by reading the imports of the five decision modules. The `lying_model` sequence attaches a counting planner to the engine and reports its call count, so "commits decided by a model: 0" is an aggregate over persisted per-run counters rather than a number written into the metrics function — and a test consults the hook by hand to prove the counter can leave zero.
 
+## Who approves what
+
+Internal effects run. Outbound ones wait.
+
+The operator declares which surfaces reach the outside world (`engine.signoff_apps`, empty by default). With Slack declared:
+
+```
+CALENDAR-01  VERIFIED            confirmed by reading it back from the system
+LINEAR-01    VERIFIED            confirmed by reading it back from the system
+SLACK-01     AWAITING_APPROVAL   waiting for a person to approve it
+```
+
+The same intent. Two effects done, one held, and the commit refused with `AWAITING_APPROVAL` rather than a generic failure. The gate is on the write, so the unapproved post is checked against the world (`slack.world.messages == []`), not against a flag. `/review` is the page a non-engineer reads: the same states, in words, with an Approve button that stores **who** approved — an unnamed approval is refused with 400, because an unattributed approval is not evidence.
+
+## Engineering decisions & the traps that taught me something
+
+**The conflict key refuses to contain the disputed fact.** The key is `CUSTOMER::PROJECT::EVENT` with no time in it. The obvious design includes the time — and it is wrong, because the time is exactly what two competing intents disagree about. Put it in the key and both intents get different keys, the collision never fires, and the conflict detector becomes dead code that always reports CLEAR. The first version of this file shipped that bug in the design document. The key excludes the disputed value; the scope holds it, and the authority map adjudicates it.
+
+**Reads are never skipped on a resume; only effects are.** A resumed run was skipping its evidence step because the step was already checkpointed, losing the approval and refusing a legitimate refund. Reads are idempotent and are now always re-read. Effects are claimed, checkpointed and skipped. The distinction is small and it was a real refund.
+
+**The verifier is never handed the write response.** Not by convention — structurally. The read path is a different function against a different endpoint, and the reconcile and verify calls take no argument carrying the write result. The test for this lies on the write (`{"id": "WRONG-ID-FROM-THE-WRITE-RESPONSE"}`) and demands the effect still verify to the *real* object.
+
+**`UNKNOWN` is not a failure, and it is not a retry.** When the write lands and the response never arrives, the only correct move is to read before acting. Building the fault injection for this taught me the trap directly: my first version raised *before* the effect landed, which models the opposite fault, where a blind retry is genuinely correct. Those two states look identical from inside the client and demand opposite behaviour. That is the whole reason the reconciliation path exists.
+
+**The audit chain was unverifiable per intent for its entire life.** The chain is global — each row links to the row before it in the whole log — but `verify_chain(intent_id)` re-hashed one intent's subset while assuming the previous hash was empty. It returned `False` for every intent after the first. A tamper-evidence feature that failed on almost everything is worse than no feature, because it trains you to ignore it. Now there are two separate claims reported side by side: *rows unchanged* (per intent) and *whole log linked* (no deletions), and I proved both by editing a row.
+
+**Two counters disagreed and I had to pick a truth.** The API reported `duplicates_prevented: 1`, the CLI harness reported `2`. The metric counted reconciliations and ignored conflict refusals — two different mechanisms doing the same job. Both now count, and the two report identical numbers.
+
+**The demo did not reproduce, which meant it was not evidence.** It reused its ledger, so a second run found every intent already committed, returned `IDEMPOTENT` everywhere, and printed `commits: 0` instead of `2`. A judge pressing the button twice would have seen different results and been right to distrust both. It now starts from a clean ledger, and a test runs the whole set twice and demands byte-identical summaries.
+
+**Frozen authority is an object, not a promise.** Hashing the authority map while leaving it a plain `dict` meant anything holding a reference could rewrite it without changing the hash — authority changed, hash unchanged. It is a mapping proxy now.
+
+**The counts on screen are deltas.** Each sequence reports what *it* wrote, not a running total. "Nothing executed" is only provable as a difference, and a cumulative number lets a reader credit an effect to the wrong run.
+
+**A test wrapper hid a method, and every probe failed honestly but uselessly.** The campaign's fault-injecting calendar wrapper did not forward the new `search_candidates`, so every bind probe returned `NOT_PROVABLE`. The fail-safe worked — nothing duplicated, nothing falsely bound — but nine runs "passed" for the wrong reason. A fail-safe that hides a broken mechanism is still a broken mechanism.
+
+**A metric accused the system of the thing it had just caught.** `false_commits` counted a `POST_COMMIT_DUPLICATE` — a duplicate that appeared *after* a legitimate commit — as a false commit. The counter that exists to prove the commit gate works was blaming it for a finding it had correctly reported.
+
+**The counter that proved a negative was shared state.** The planner used to demonstrate that the engine never consults a model kept its call count as a *class* attribute, so every planner ever constructed incremented the same number. A count reset in one place was polluted by a call made somewhere else — a poor property for the figure whose whole job is to prove that a thing did not happen. It is per instance now, and the API's line is an aggregate over persisted per-run counters rather than a zero typed into the metrics function.
+
+**The demo's dates were frozen in the month it was written.** The fixture clock was a set of literals, so a console opened next year would still have shown last year's week. The engine always took the clock as a parameter, so this was only ever the fixtures; they are now derived from the real date, and a test proves the verdicts are identical on either base.
+
+## What's real vs pending — the honesty table
+
+The whole point of this project is mechanical proof, so the same standard applies to this file. Every ✅ names the artifact behind it. Every ⚠️ names what is not true yet.
+
+| | State | Evidence |
+|---|---|---|
+| Intent contract, canonical hashing, freeze | **Real — tested** | `intent.py`; authority becomes a mapping proxy, `set_authority` raises after freeze. Groups A+B, **36 tests** |
+| Evidence gate (sender, phrase, customer, project, time, staleness, future-dating) | **Real — tested** | `intent.py::parse_approval`; deterministic string and regex checks, no model. Group C, **13 tests** |
+| Scope and policy, including an operation whitelist | **Real — tested** | `policy.py`; out-of-scope targets and unknown operations refused before any adapter is consulted. Group D, **14 tests** |
+| Conflict registry, one active intent per outcome | **Real — tested** | `registry.py`; a partial unique index in SQLite, not check-then-act. Group E, **15 tests** |
+| 12-state effect machine, illegal transitions refused | **Real — tested** | `ledger.py`; `PLANNED → VERIFIED` raises, leaving `VERIFIED` needs an audited invalidation. Group F, **13 tests** |
+| Independent read-back (a different call than the writer) | **Real — tested** | `postconditions.py`; proved by lying on the write response and still verifying to the real object. Group G, **12 tests** |
+| Reconciliation: `EXACT / LIKELY / AMBIGUOUS / NOT_FOUND` | **Real — tested** | `reconcile.py`; deterministic levels, no fuzzy matching, `AMBIGUOUS` escalates to a human. Group H, **6 tests** |
+| Faults, crash and resume without duplication | **Real — tested** | Groups I, **12 tests**; plus `test_smoke.py`, 10 end-to-end |
+| Adversarial model cannot cause a transition | **Real — tested** | Group J, **10 tests**; the planner is never consulted, and the counter is asserted |
+| Commit gate with no partial success | **Real — tested** | `policy.py::can_commit`, the only path to `COMMITTED`. Group K, **5 tests** |
+| Semantic effect binding: fingerprint, match hierarchy, refusal | **Real — tested** | `binding.py`; group M, **15 tests**, including the four rates above |
+| Matchability policy: where absence cannot be proven, no retry | **Real — tested** | `binding.SURFACE_MATCHABILITY` + `NOT_PROVABLE`, overridable per surface per operator |
+| Lease-based takeover between workers | **Real — tested** | `registry.register(lease_seconds=…)` and `expire_lease`; a live lease blocks a second worker, an expired one lets it take over and read first |
+| Authored, hashed exclusivity relation | **Real — tested** | `binding.EXCLUSIVITY_POLICY` v1; renew ⊥ cancel_renew, order-insensitive, digest changes if the table does |
+| Post-commit duplicate scan | **Real — tested** | `engine.post_commit_scan`; flags and escalates, never reverses a commit |
+| Hash-chained audit, tamper detection | **Real — tested** | `audit.py`; verified by editing a row and watching both checks fail |
+| Linear adapter | **Real — verified live** | issue `SUB-5` created via GraphQL, then found through a *different* operation, plus a negative control that returns zero |
+| Gmail and Calendar adapters | ⚠️ **Live-ready, not yet live-exercised** | Endpoints, headers and bodies audited against Google's own contracts, and the read/write tags proven to agree (`tests/test_j_live_adapters.py`, 12 tests against captured response shapes). Auditing that way found a real breaker: a live `From` header is `Name <addr@host>` while the gate compares bare addresses, so every legitimate approval would have been refused as an unrecognised sender. Fixed, with a spoof case proving a display name cannot impersonate a trusted address. The remaining step is the consent click no script can give |
+| Secret scanner + pre-push hook | **Real — tested** | Blocks on a planted credential; caught a live session token before it was ever pushed |
+| Natural-language intake: a proposer offers a contract, deterministic code accepts or refuses | **Real — tested** | `intake.py`; group N, **15 tests**. The authority mapping, the conflict key, the postconditions and the recipients are the operator's: a proposal that supplies any of them is refused on the field |
+| Sign-off boundary for outbound effects | **Real — tested** | group O, **14 tests**; Slack declared as reaching the outside world waits in `AWAITING_APPROVAL` while `CALENDAR-01` and `LINEAR-01` in the same intent are already `VERIFIED`, and the outbound write is checked against the world, not a flag |
+| Review surface for a non-engineer | **Real — tested** | `/review` + `/api/jobs`; every phrase maps to a ledger state, approvals are stored with who gave them, and an unnamed approval is refused with 400 |
+| 100-run randomised adversarial campaign | **Real — run** | `scripts/campaign.py`; 100 runs, 48 fault combinations, zero invariant violations, four refusal codes exercised. `evidence/campaign.json` holds the artifact |
+| Live surface verification | **Real — run** | `scripts/verify_live.py`: reports each surface as LIVE, UNCONFIGURED or FAILED. Currently 2 live (Linear, Google OAuth client), 2 unconfigured. Exit code is non-zero only for a configured surface that fails |
+| Console and review page | ⚠️ **Real, verified by hand** | Every endpoint exercised with curl across all thirteen sequences, including `/review`, `/api/jobs`, `/api/approve` and `/api/intake`; the HTTP surface is covered by the automated suite, the rendered pages are not |
+| Slack adapter | ⚠️ **Real code, unused by the flagship** | Present and wired; the shipped workflow has no notification effect |
+| Gmail and Calendar adapters | ⚠️ **Real code, not yet exercised** | Written against documented request shapes. No OAuth token exists yet, so they have never run against Google. `LOCAL` mode is what the console demonstrates |
+| End-to-end `LIVE` run | ⚠️ **Half verified** | Linear round-trips live. Google is verified up to the click: `scripts/verify_live.py` proves the OAuth client is valid (Google answers `invalid_grant`, not `invalid_client`), and the remaining step is a browser consent no script can give |
+| Sign-off boundary under the campaign | ❌ **Pending** | The boundary has 14 deterministic tests but is not exercised inside the randomised campaign, which runs with an empty sign-off set |
+| Postgres-backed store | ❌ **Pending** | SQLite on one host. The uniqueness guarantee is real and single-machine |
+| Hosted deployment | ❌ **Not attempted** | This runs locally by choice. There is no public URL, so there is no live-demo link in this file to be broken |
+
+## The app
+
+Two pages, one process, no build step.
+
+`uv run uvicorn causal.api:app --port 8000`, then open `http://127.0.0.1:8000`.
+
+**The operator console** has one button per sequence. Each press runs the real engine against a live ledger and renders the contract and its hash, the frozen authority snapshot, the evidence gate result, the conflict key and outcome, every effect with its state, external id and write-attempt count, any reconciliation with its confidence, the commit verdict with its reasons, and the hash-chained timeline beside it. It also has a panel where you type a request in words and watch a proposer offer a contract — including one that tries to widen its own authority and is refused on the field.
+
+**The review page** (`/review`) is the same engine for somebody who is not an engineer: jobs in words, what each system confirmed, what is waiting on a person, and an Approve button that records who approved.
+
+The environment badge reads `LOCAL`, `LIVE` or `TWIN` from `CAUSAL_MODE`. A screen is never ambiguous about which kind of services produced what is on it.
+
+## Prior art, credited
+
+Not claimed as invented. The honest attribution is worth more than the overclaim, and every one of these was read rather than summarised from a search result.
+
+- **Project Blackbox** proved that a root cause must pass an evidence gate before remediation is allowed, working backward through real lineage to establish a cause instead of guessing it. CAUSAL applies that discipline to the whole action chain rather than the diagnosis.
+- **Hindsight** put the verification principle best: an agent that reports its own success proves nothing. Every write is verified by reading it back through a different API than the one that wrote it, and any tool without a verifier is marked failed rather than skipped.
+- **ContextSeal** froze a reviewable authorisation scope that a human signs off before any write happens, and bound its evidence to a specific commit.
+- **Remedi** seals a repair plan with hashes, requires explicit approval before execution, writes a pending-validation status back, and refuses to mark an assertion passed simply because a patch was generated.
+- Supply-chain provenance (`in-toto`, SLSA) and plan-hash-bound approvals established, outside the agent world, that a pre-registered contract plus per-step evidence is how you prove an artifact came from an authorised step.
+- Workflow engines with ID-reuse policies established that a second execution on a live identity must be refused by the platform, not by convention.
+
+What is proposed as new here is the combination: **an external action is not successful because the artifact exists, but only if it is provably the authorised, conflict-free consequence of one frozen intent — enforced across applications that share no transaction boundary.**
+
+## What this cannot do
+
+`LIMITATIONS.md` is the full list. The three that matter most:
+
+- **It is not a distributed transaction.** Two providers with no shared transaction cannot be made to commit together. CAUSAL detects disagreement, refuses to call it success, and reconciles or escalates. That is weaker than atomicity and it is not presented as atomicity.
+- **The commit is only as strong as the postconditions.** Three app checkers ship — calendar, Linear, Slack — plus a temporal-claims check, and each one is registered against the intent rather than written ad hoc. A gap in a checker is a gap in the guarantee, and a required effect with no registered checker is refused rather than passed.
+- **`AMBIGUOUS` stops and asks a human.** Deliberate. A system that guesses between two plausible artifacts is worse than one that refuses.
+
