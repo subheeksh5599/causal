@@ -106,6 +106,10 @@ def main() -> int:
     ap.add_argument("--intent-id", default="LIVE-01")
     ap.add_argument("--personnel", nargs="*", default=[],
                     help="real attendee addresses for the calendar event")
+    ap.add_argument("--contacts", nargs="*", default=[],
+                    help="addresses the operator recognises as approvers for this run. The "
+                         "engine's evidence gate refuses any other sender, so naming the "
+                         "real approver here is an operator decision, not a bypass")
     ap.add_argument("--find-only", action="store_true", help="search and read; write nothing")
     args = ap.parse_args()
 
@@ -146,6 +150,11 @@ def main() -> int:
 
     print("\n3. execute against the real apps")
     stack = S.fresh_stack("LIVE", str(Path("./evidence/live-run.db")))
+    if args.contacts:
+        # The operator says who may authorise this work. Without it the engine holds only the
+        # fixture contact, and a real approver is refused as an unrecognised sender — which
+        # is the gate doing its job, not a defect.
+        stack.engine.known_contacts = set(args.contacts) | set(stack.engine.known_contacts)
     print(f"  mode {stack.mode}")
     result = stack.engine.run(intent, evidence_message_id=message["id"])
 

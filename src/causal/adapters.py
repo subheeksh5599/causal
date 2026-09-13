@@ -177,12 +177,26 @@ class CalendarLive:
     base_url_default = "https://www.googleapis.com"
 
     def __init__(self, auth: TokenSource, *, calendar_id: str = "primary",
-                 timezone: str = "Europe/London", base_url: str | None = None) -> None:
+                 timezone: str | None = None, base_url: str | None = None) -> None:
         self.auth = auth
         self.calendar_id = calendar_id
-        self.timezone = timezone
+        # The approval states a wall-clock time, so the event must be created in the
+        # operator's own zone. Defaulting to a fixed foreign zone (this used to be
+        # "Europe/London") put a 15:00 kickoff at 19:30 on the operator's calendar.
+        # CAUSAL_TIMEZONE names one explicitly; otherwise the machine's own zone is used.
+        self.timezone = timezone or os.environ.get("CAUSAL_TIMEZONE") or ""
         self.base_url = (base_url or self.base_url_default).rstrip("/")
         self.name = "calendar"
+
+    def _zone(self):
+        from datetime import datetime, timezone as _tz
+        if not self.timezone:
+            return datetime.now().astimezone().tzinfo or _tz.utc
+        try:
+            from zoneinfo import ZoneInfo
+            return ZoneInfo(self.timezone)
+        except Exception:                                          # noqa: BLE001
+            return datetime.now().astimezone().tzinfo or _tz.utc
 
     def _headers(self) -> dict:
         return {"Authorization": f"Bearer {self.auth.token()}", "Content-Type": "application/json"}
@@ -193,12 +207,18 @@ class CalendarLive:
         from datetime import datetime, timedelta
 
         start = datetime.fromisoformat(start_iso)
+        # An explicit offset, not a `timeZone` key and not a bare naive string: Google answers
+        # 400 "Missing time zone definition for start time" to the bare form, and a `timeZone`
+        # key tells it which zone to interpret the wall clock IN — which is how a 15:00 kickoff
+        # became 19:30. With the offset attached, 15:00 is stored as 15:00 and reads back as it.
+        zone = self._zone()
+        start = start.replace(tzinfo=zone)
         end = start + timedelta(hours=1)
         body = {
             "summary": title,
             "description": f"{_hash_tag(intent_hash)} created by CAUSAL",
-            "start": {"dateTime": start.isoformat(), "timeZone": self.timezone},
-            "end": {"dateTime": end.isoformat(), "timeZone": self.timezone},
+            "start": {"dateTime": start.isoformat()},
+            "end": {"dateTime": end.isoformat()},
             "attendees": [{"email": a} for a in attendees if "@" in a],
             "extendedProperties": {"private": {"intent_hash": intent_hash}},
         }
@@ -401,7 +421,10 @@ def build_apps(mode: str | None = None):
     if mode == "LOCAL":
         return Apps.local()
 
-    timezone = os.environ.get("CAUSAL_TIMEZONE", "Europe/London")
+    # The operator's own time zone, not a fixed foreign one: `Europe/London` here is what put
+    # a 15:00 kickoff at 19:30 on a calendar read at +05:30. Empty means "whatever this
+    # machine's clock is", which is the zone the person reading the approval lives in.
+    timezone = os.environ.get("CAUSAL_TIMEZONE", "")
 
     if mode == "LIVE":
         auth = GoogleAuth(

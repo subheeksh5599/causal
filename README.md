@@ -404,6 +404,14 @@ inspect button and no explanation of why the queue is empty.
 
 **The table-of-contents generator deleted thirty sections of this file.** It rewrote "the block between the TOC heading and the next `---` rule" — and this file separates sections with headings, so the next rule was inside the Tests table, hundreds of lines down. It bounded on the next heading now and refuses the write if the heading count changes. A tool whose job is keeping this file honest has to be unable to eat it.
 
+**The first real calendar write landed four and a half hours late, and Google refused the fix.** The live adapter carried a hardcoded `timeZone: Europe/London`, so a contract authorising `15:00` created the event at 15:00 London — 19:30 on the operator's calendar — and the verification step caught it: `event start '2026-09-15T19:30' != authorised '2026-09-15T15:00'`. Dropping the `timeZone` key looked right and was worse: Google answered `400 Missing time zone definition for start time`. The working form is the one nobody guesses — send the wall clock with the operator's own offset attached (`2026-09-15T15:00:00+05:30`), which stores 15:00 and reads back as 15:00. `CAUSAL_TIMEZONE` names a zone; otherwise it is this machine's clock, which is the zone the person reading the approval lives in.
+
+**A postcondition demanded something the calendar could never hold.** The attendee check compared the event's invitees against *every* recipient in the contract — and contracts name Slack channels among their recipients. A channel is not an email address, so the live adapter filtered it out of the invite and the check failed on every real event, while the offline fakes (which stored the channel verbatim) passed happily. Both sides now compare the address-shaped recipients only: every address the contract authorises must be on the invite, and no other address may be. The fixture that hid this was the fixture agreeing with itself.
+
+**A verification script that reported a pass it had not earned.** `verify_live.py` compared `created.get("external_id")` with the read-back's, and both sides are `None` — the adapters return `id` — so it compared `None == None` and printed LIVE without proving a single write. The same class of bug is worth watching for anywhere a check compares two dict fields: a key that is missing on both sides is an equality, not an error. It now requires a non-empty id and prints it (`SUB-7`, `5f5fvvs7qjk5cnj3h7brgpnte4`).
+
+**A verifier reported every surface UNCONFIGURED on the machine where they were configured.** The credentials live in `.env`; `verify_live.py` and `live_run.py` read only the process environment, so the one command whose job is to say what is genuinely reachable answered "nothing is" — and refused a live run that would have worked. Both load the repository's `.env` now, via `os.environ.setdefault`, so a real environment variable still wins.
+
 **Frozen authority is an object, not a promise.** Hashing the authority map while leaving it a plain `dict` meant anything holding a reference could rewrite it without changing the hash — authority changed, hash unchanged. It is a mapping proxy now.
 
 **The counts on screen are deltas.** Each sequence reports what *it* wrote, not a running total. "Nothing executed" is only provable as a difference, and a cumulative number lets a reader credit an effect to the wrong run.
@@ -450,12 +458,13 @@ The whole point of this project is mechanical proof, so the same standard applie
 | Demo script that cannot silently drift | **Real — run** | `scripts/demo_preflight.py`; replays `DEMO.md`'s click order, asserts every quoted number and that every label it points at is on the page, and leaves the ledger reset |
 | Console and review page | **Real — tested, and driven in a browser** | Every endpoint exercised across all thirteen sequences, and both pages driven in a real browser through every state they can be in (empty queue, actionable, just-resolved), with the labels the demo script points at asserted by the preflight |
 | Slack adapter | **Real — tested** | It is the outbound effect in the sign-off sequence: `SLACK-01` is written only after a named approval, and the campaign holds it in all 30 runs that reach it |
-| End-to-end `LIVE` run | **Real per surface — the flagship run needs an approval in the mailbox** | Linear, Gmail, Calendar and the OAuth client are each verified live (`verify_live.py --write`, 4 live / 0 unconfigured). `live_run.py` drives the whole flagship against the real three apps and writes nothing until the evidence exists: run against a mailbox holding no approval message, it printed `0 candidate(s) by search` and stopped. Send one message with the subject `CAUSAL approval` and it completes the write path against the real apps; that one input is the difference, and it is stated rather than implied |
+| End-to-end `LIVE` run | **Real — committed against the real three apps** | `live_run.py` searched the real mailbox, read the real approval, built the contract from it, then created a **real Calendar event** (`qmqcrcai5ihdhs0t4uu5rhp9i8`) and a **real Linear issue** (`SUB-8`), read each back through a different call, and returned `COMMITTED` with the audit chain intact (`rows unchanged: True · whole-log chain linked: True`). Getting there took four attempts, and the failures were the point: the first run refused a real message whose text named a different customer, the second wrote the calendar event in a foreign time zone (15:00 became 19:30), the third was refused by Google for a bare local time, and the fourth committed. Every one of those was a defect found on real APIs, not a fixture |
 
-Every row above names the artifact behind it, and there is no row resting on an intention. The
-only input the project does not supply itself is an approval message in a real mailbox: every
-surface is verified live, and the flagship's write path is gated on evidence that has to exist
-first — which is the product's whole point rather than a missing piece.
+Every row above names the artifact behind it. The live path was exercised end to end against the
+real three apps — a real approval in a real mailbox authorising a real Calendar event and a real
+Linear issue, each read back independently — and the four attempts it took are written up under
+[Engineering decisions](#engineering-decisions--the-traps-that-taught-me-something), because the
+first three found defects that no fixture had.
 
 Not on this table because it is scope rather than pending work: there is **no hosted deployment**
 and **no Postgres backend**. This runs locally on SQLite by design — [How I'd deploy
@@ -655,6 +664,7 @@ Nothing below is a screenshot standing in for evidence. Each row is an artifact 
 | `docs/media/` | The poster and the three screenshots above, extracted from that recording |
 | `uv run python scripts/verify_all.py` | The gate: suite, campaign, secret scan, anchors, and that the numbers in this file match reality |
 | `tests/` — 240 tests, thirteen files | Every claim in the honesty table, each group naming the artifact behind it |
+| `uv run python scripts/verify_live.py --write` and `scripts/live_run.py` | That the surfaces are reachable and the flagship commits against the real apps: Calendar event `qmqcrcai5ihdhs0t4uu5rhp9i8`, Linear issue `SUB-8`, both read back through different calls |
 | `evidence/campaign.json` | The 100-run randomised campaign: 48 fault combinations, zero invariant violations |
 | `tests/test_g_binding.py` | The four measured rates: semantic recovery, false binding, duplicate prevention, ambiguity refusal |
 | `tests/test_k_counters.py` | That the panel cannot report fewer commits than the ledger holds, including on a second press |

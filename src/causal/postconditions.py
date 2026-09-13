@@ -72,9 +72,14 @@ def check_calendar(artifact: dict, *, intent, effect) -> Verdict:
         v.append(f"event title {artifact.get('title')!r} != authorised {expected_title!r}")
     if artifact.get("start_iso") != intent.scope.start_iso:
         v.append(f"event start {artifact.get('start_iso')!r} != authorised {intent.scope.start_iso!r}")
-    if set(a.lower() for a in artifact.get("attendees", [])) != set(
-        r.lower() for r in intent.scope.recipients
-    ):
+    # Compare the ADDRESS-shaped recipients only, on both sides. A contract may name a Slack
+    # channel ("#engineering") among its recipients, and a channel can never be a calendar
+    # invitee: the live adapter filters those out, so comparing against the raw recipient set
+    # failed every real event on a check the artifact cannot possibly satisfy. Every address
+    # the contract authorises must still be on the invite, and no other address may be.
+    invited = {r.lower() for r in intent.scope.recipients if "@" in r}
+    present = {a.lower() for a in artifact.get("attendees", []) if "@" in a}
+    if present != invited:
         v.append("event attendees do not match the authorised recipients")
     if artifact.get("intent_hash") != intent.intent_hash:
         v.append("event does not carry this intent's hash")
