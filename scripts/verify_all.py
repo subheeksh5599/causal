@@ -116,10 +116,15 @@ def main() -> int:
                code == 0 and "every anchor resolves" in out,
                "all anchors" if code == 0 else (out.strip().splitlines()[-1][:60] or "no output"))
 
-    # 6. the demo video is the one deliverable a script cannot produce, so at least prove
-    #    the README is not about to be submitted with an empty slot in it
-    report.add("demo video link is present", PLACEHOLDER not in md,
-               "unfilled placeholder" if PLACEHOLDER in md else "filled")
+    # 6. the demo video is the one deliverable a script cannot produce, so prove the README
+    #    carries a real link: no placeholder, and an actual player URL. Deleting the link
+    #    would otherwise pass this gate silently.
+    has_placeholder = PLACEHOLDER in md
+    link = re.search(r"https?://(?:youtu\.be|www\.youtube\.com|loom\.com|"
+                     r"github\.com/[^)\s]+/user-attachments|vimeo\.com)/[^\s)]+", md)
+    report.add("demo video link is present", not has_placeholder and bool(link),
+               "unfilled placeholder" if has_placeholder else
+               (link.group(0)[:48] if link else "no video link found in README.md"))
 
     print()
     if report.failed:
