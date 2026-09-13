@@ -4,12 +4,15 @@ The CLI harness (`scripts/demo.py`) and the console API (`causal/api.py`) both
 drive these, so what a judge clicks is the same code path the tests and the
 harness exercise. One implementation, three ways to reach it.
 """
+
 from __future__ import annotations
+
 import os
 from dataclasses import dataclass
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any
+
 from . import audit as A
 from . import binding
 from . import plain
@@ -20,6 +23,7 @@ from .evidence_sink import OutcomeStore
 from .intent import Intent, Scope, conflict_key_for, EffectSpec
 from .ledger import EffectLedger
 from .registry import Registry
+
 def _fixture_clock() -> tuple[str, str, str, str]:
     """The demo world's dates, computed from a real date rather than frozen.
 
@@ -41,11 +45,14 @@ def _fixture_clock() -> tuple[str, str, str, str]:
     wednesday = monday + timedelta(days=2)
     return (monday.isoformat(), f"{tuesday.isoformat()}T15:00",
             f"{tuesday.isoformat()}T16:00", f"{wednesday.isoformat()}T16:00")
+
+
 CONTACT = "buyer@acme.example"
 REFERENCE_DATE = "2026-09-14"
 TUESDAY = "2026-09-15T15:00"
 TUESDAY_LATE = "2026-09-15T16:00"
 WEDNESDAY = "2026-09-16T16:00"
+
 SEQUENCES = [
     ("intended", "The intended path"),
     ("timeout_after_write", "Timeout AFTER the write — reconciled, never retried blind"),
@@ -61,7 +68,10 @@ SEQUENCES = [
     ("counter_intent", "Renew and cancel contend for one contract"),
     ("awaiting_signoff", "Outbound waits for a person; internal effects do not"),
 ]
+
 ACME_PEOPLE = ("dana.reyes@acme.example", "sam.okafor@acme.example")
+
+
 def build_binding_intent(customer: str, project: str, start_iso: str, *, intent_id: str,
                          event: str = "Kickoff", operation: str = "", resource: str = "",
                          recipients: tuple[str, ...] = ACME_PEOPLE) -> Intent:
@@ -103,6 +113,8 @@ class Stack:
                 obj.close()
             except Exception:
                 pass
+
+
 def fresh_stack(mode: str = "LOCAL", db_path: str | None = None) -> Stack:
     from .adapters import build_apps
 
@@ -115,6 +127,8 @@ def fresh_stack(mode: str = "LOCAL", db_path: str | None = None) -> Stack:
     engine = Causal(apps, registry, ledger, audit, outcomes,
                     known_contacts={CONTACT}, reference_date_iso=REFERENCE_DATE)
     return Stack(apps, registry, ledger, audit, outcomes, engine, mode.upper(), db)
+
+
 def build_intent(customer: str, project: str, start_iso: str, *, intent_id: str,
                  event: str = "Kickoff", calendar_payload: str | None = None) -> Intent:
     scope = Scope(customer=customer, project=project, event=event, start_iso=start_iso,
@@ -130,6 +144,8 @@ def build_intent(customer: str, project: str, start_iso: str, *, intent_id: str,
                   authority={"approval": "gmail", "time": "gmail", "meeting": "calendar",
                              "work": "linear"},
                   effects=effects, conflict_key=conflict_key_for(scope))
+
+
 def seed_approval(stack: Stack, customer: str, project: str, start_iso: str,
                   message_id: str) -> str:
     if stack.mode == "LOCAL":
@@ -137,6 +153,8 @@ def seed_approval(stack: Stack, customer: str, project: str, start_iso: str,
             message_id, sender=CONTACT,
             body=f"{customer} approved the {project}. Kickoff {start_iso}.", timestamp=None)
     return message_id
+
+
 def truth(stack: Stack) -> dict:
     out: dict[str, Any] = {}
     for label, client, attr in (("calendar", stack.apps.calendar, "events"),
@@ -145,8 +163,12 @@ def truth(stack: Stack) -> dict:
         world = getattr(client, "world", None)
         out[label] = len(getattr(world, attr)) if world is not None else "live"
     return out
+
+
 def _delta(before: dict, after: dict) -> dict:
     return {k: (after[k] - before[k]) if isinstance(before.get(k), int) else "live" for k in after}
+
+
 class LyingPlanner:
     """Claims total success. The engine has no path to consult it.
 
@@ -156,12 +178,15 @@ class LyingPlanner:
     a negative.
     """
 
-    calls = 0
+    def __init__(self) -> None:
+        self.calls = 0
 
     def propose(self, *_a, **_k) -> dict:
-        LyingPlanner.calls += 1
+        self.calls += 1
         return {"status": "COMMITTED", "verified": True, "effects": ["all done"],
                 "evidence": "invented"}
+
+
 def run(name: str, stack: Stack) -> dict:
     """Run one sequence. Returns the report plus the ground truth around it."""
     engine = stack.engine
@@ -372,5 +397,7 @@ def run(name: str, stack: Stack) -> dict:
     payload["audit_intact"] = stack.audit.verify_chain(payload["intent_id"])
     payload["chain_linked"] = stack.audit.verify_chain()
     return payload
+
+
 def run_all(stack: Stack) -> list[dict]:
     return [run(name, stack) for name, _ in SEQUENCES]
