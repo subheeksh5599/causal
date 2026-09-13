@@ -134,10 +134,11 @@ uv sync
 uv run uvicorn causal.api:app --port 8000
 ```
 
-Then open `http://127.0.0.1:8000` for the operator console and
-`http://127.0.0.1:8000/review` for the review page. Press **reset ledger** once in the left
-rail before following `DEMO.md` — the sequences share a ledger, and on an accumulated one
-the same buttons honestly report different verdicts.
+Then open `http://127.0.0.1:8000/fresh` for the operator console and
+`http://127.0.0.1:8000/review` for the review page. `/fresh` empties the ledger and lands
+you on the console, so every number `DEMO.md` quotes holds from the first click. The header
+reads `ledger · fresh` when you are on a clean one; a plain `/` keeps the previous ledger on
+purpose, and says so.
 
 ### Useful commands
 
@@ -417,7 +418,8 @@ The whole point of this project is mechanical proof, so the same standard applie
 
 Two pages, one process, no build step.
 
-`uv run uvicorn causal.api:app --port 8000`, then open `http://127.0.0.1:8000`.
+`uv run uvicorn causal.api:app --port 8000`, then open `http://127.0.0.1:8000/fresh` for a
+clean ledger, or `/` to keep the previous one.
 
 **The operator console** has one button per sequence. Each press runs the real engine against a live ledger and renders the contract and its hash, the frozen authority snapshot, the evidence gate result, the conflict key and outcome, every effect with its state, external id and write-attempt count, any reconciliation with its confidence, the commit verdict with its reasons, and the hash-chained timeline beside it. It also has a panel where you type a request in words and watch a proposer offer a contract — including one that tries to widen its own authority and is refused on the field.
 

@@ -111,6 +111,13 @@ def main() -> int:
     check("status COMMITTED", r["result"]["status"], "COMMITTED")
     check("rows unedited (per intent)", r.get("audit_intact"), True)
     check("whole-log chain linked", r.get("chain_linked"), True)
+    # the EFFECTS table the script reads out, row by row
+    fx = {e["effect_id"]: e for e in r["result"]["effects"]}
+    for eid, ext, writes in (("CALENDAR-01", "ext-0001", 0),
+                             ("LINEAR-01", "lin-0001", 1),
+                             ("SLACK-01", "msg-0001", 1)):
+        check(f"table row {eid} external id", fx[eid]["external_id"], ext)
+        check(f"table row {eid} writes", fx[eid]["attempts"], writes)
 
     print("\n0:35  click duplicate_before_commit:")
     r = call("POST", f"{b}/api/run/duplicate_before_commit")
@@ -123,6 +130,11 @@ def main() -> int:
     check("CALENDAR-01 VERIFIED", r["effect_states"]["CALENDAR-01"], "VERIFIED")
     check("LINEAR-01 VERIFIED", r["effect_states"]["LINEAR-01"], "VERIFIED")
     check("SLACK-01 AWAITING_APPROVAL", r["effect_states"]["SLACK-01"], "AWAITING_APPROVAL")
+    fx = {e["effect_id"]: e for e in r["result"]["effects"]}
+    for eid, ext, writes in (("CALENDAR-01", "evt-0002", 1), ("LINEAR-01", "lin-0003", 1)):
+        check(f"table row {eid} external id", fx[eid]["external_id"], ext)
+        check(f"table row {eid} writes", fx[eid]["attempts"], writes)
+    check("the held effect was not written", fx["SLACK-01"]["attempts"], 0)
 
     print("\n1:05  the review tab, then Approve and send:")
     jobs = call("GET", f"{b}/api/jobs")
@@ -166,6 +178,11 @@ def main() -> int:
     check("three jobs", metrics["intents"], 3)
     check("two committed", metrics["committed"], 2)
     check("zero false commits", metrics["false_commits"], 0)
+    # the rest of the counters panel, since the script reads them off the screen
+    for key, want in (("refused", 0), ("reconciled", 0), ("duplicates_prevented", 0),
+                      ("verification_failures", 0), ("post_commit_duplicates", 0),
+                      ("commits_decided_by_a_model", 0)):
+        check(f"counter {key}", metrics[key], want)
 
     print("\nleave the ledger ready to record:")
     # The walk above proves the numbers, but it also leaves 3 intents and 2 commits behind.
