@@ -5,22 +5,31 @@
 `GET /` serves the operator console. The sequences are buttons; every panel
 is filled from a real run against the same engine the tests drive.
 """
+
 from __future__ import annotations
+
 import os
 from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
+
 from . import audit as A
 from . import intake
 from . import plain
 from . import scenarios
 from .registry import CONFLICT, IDEMPOTENT, REGISTERED, RESUME, SUPERSEDE
+
 CONSOLE = Path(__file__).with_name("console.html")
 REVIEW = Path(__file__).with_name("review.html")
+
 app = FastAPI(title="CAUSAL", description="Intent-bound cross-app execution")
+
 _state: dict = {"stack": None}
 #: which sequence produced each job, so approving can resume the run that made it
 _origin: dict[str, str] = {}
+
+
 def stack():
     if _state["stack"] is None:
         _state["stack"] = scenarios.fresh_stack(os.environ.get("CAUSAL_MODE", "LOCAL"),
@@ -171,6 +180,8 @@ def reset() -> dict:
     _state["stack"] = None
     stack()
     return {"ok": True, "reset": True}
+
+
 def _remember(name: str, out: dict) -> None:
     """Remember which sequence produced a job, so a later approval can resume it."""
     if out.get("intent_id"):
@@ -180,6 +191,8 @@ def _remember(name: str, out: dict) -> None:
     for key in ("second", "third"):
         if isinstance(out.get(key), dict) and out[key].get("intent_id"):
             _origin[out[key]["intent_id"]] = name
+
+
 def coding_for(status: str) -> str:
     """A colour, so a person can scan the list without reading every word."""
     if status == "COMMITTED":
@@ -187,6 +200,8 @@ def coding_for(status: str) -> str:
     if status in ("REFUSED", "FROZEN"):
         return "stopped"
     return "waiting"
+
+
 def _intents(s) -> list[dict]:
     """One row per intent the registry knows about, with its effect states."""
     rows = []
@@ -204,6 +219,8 @@ def _intents(s) -> list[dict]:
             "committed": row["status"] == "COMMITTED",
         })
     return rows
+
+
 def _metrics(s) -> dict:
     """Counters computed from the run, not asserted here.
 
@@ -237,8 +254,9 @@ def _metrics(s) -> dict:
     m["post_commit_duplicates"] = post_commit_duplicates
     # Read off the persisted per-run counters rather than typed in as zero: if any run
     # ever consulted a model hook, this number moves.
-    model_decided = 0
-    m["commits_decided_by_a_model"] = model_decided
+    m["commits_decided_by_a_model"] = m.get("model_calls", 0)
     return m
+
+
 __all__ = ["app", "conflict_outcomes"]
 conflict_outcomes = [REGISTERED, IDEMPOTENT, CONFLICT, SUPERSEDE, RESUME]
