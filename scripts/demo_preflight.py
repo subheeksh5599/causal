@@ -23,6 +23,25 @@ import urllib.request
 FAILURES: list[str] = []
 PASSES = 0
 
+#: Strings DEMO.md tells the recorder to point at. They must exist in the page that is
+#: served, because a script written from the API payload names payload keys (`events_matching`)
+#: while the page paints its own labels (`matching events`) — and a recorder cannot find a
+#: phrase that is not on screen. Checked case-insensitively against the served HTML.
+CONSOLE_LABELS = (
+    "reset ledger", "Ask in words", "read it",
+    "a proposal that widens its own authority",
+    "wrote this run", "read back from apps", "matching events", "worker A's effect",
+    "while the lease was live", "matching candidates",
+    "Effects · write path vs independent read", "Commit gate",
+    "rows unedited", "whole-log chain linked",
+    "Invariant counters", "Audit chain",
+)
+REVIEW_LABELS = (
+    # static markup only: the job headlines are composed at runtime by plain.job_view and
+    # are checked against the API payload below instead, where they actually come from
+    "Approve and send", "operator console", "in words", "show the states",
+)
+
 
 def call(method: str, url: str, body: dict | None = None) -> dict:
     data = json.dumps(body).encode() if body is not None else None
@@ -70,6 +89,16 @@ def main() -> int:
     print("\npress reset ledger:")
     check("ledger reset", call("POST", f"{b}/api/reset").get("ok"), True)
 
+    print("\nthe labels the script tells you to point at:")
+    with urllib.request.urlopen(f"{b}/", timeout=30) as resp:
+        console_html = resp.read().decode()
+    with urllib.request.urlopen(f"{b}/review", timeout=30) as resp:
+        review_html = resp.read().decode()
+    for label in CONSOLE_LABELS:
+        check(f"console shows: {label[:46]}", label.lower() in console_html.lower(), True)
+    for label in REVIEW_LABELS:
+        check(f"review shows:  {label[:46]}", label.lower() in review_html.lower(), True)
+
     print("\n0:10  click crash_recovery:")
     r = call("POST", f"{b}/api/run/crash_recovery")
     check("wrote this run calendar = 0", r["wrote"]["calendar"], 0)
@@ -97,6 +126,11 @@ def main() -> int:
     check("exactly one waiting for a person", len(jobs["need_approval"]), 1)
     check("the waiting job's headline",
           jobs["need_approval"][0]["headline"], "Waiting for your approval to send SLACK-01.")
+    given = sorted(j["headline"] for j in jobs["jobs"])
+    check("the stopped job says why it stopped",
+          "Two identical things exist. I stopped rather than guess." in given, True)
+    check("a finished job reads as finished",
+          "Done. 3 of 3 systems confirmed." in given, True)
     approved = call("POST", f"{b}/api/approve",
                     {"intent_id": jobs["need_approval"][0]["intent_id"],
                      "approved_by": "dana.reyes@acme.example"})

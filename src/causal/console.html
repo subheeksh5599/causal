@@ -178,6 +178,10 @@ function render(r) {
   const out = $('outcome'); out.innerHTML = '';
 
   const head = el('div', 'panel');
+  // The beats the demo narrates are given named rows here rather than left to the
+  // catch-all panel at the bottom, which prints raw JSON under a de-underscored key.
+  // A recorder reading the script should find every phrase it points at in this panel.
+  const lease = r.while_lease_live || {};
   head.innerHTML = `<h3>${esc(r.name)} — ${esc(r.narration || '')}</h3>
     <dl class="kv">
       <dt>intent</dt><dd>${esc(r.intent_id)}</dd>
@@ -185,6 +189,10 @@ function render(r) {
       <dt>mode</dt><dd>${esc(r.mode)}</dd>
       <dt>wrote this run</dt><dd>${JSON.stringify(r.wrote)}</dd>
       <dt>read back from apps</dt><dd>${JSON.stringify(r.truth)}</dd>
+      ${r.events_matching !== undefined ? `<dt>matching events</dt><dd>${esc(r.events_matching)} — the world holds this many, whatever the writers claim</dd>` : ''}
+      ${r.candidates !== undefined ? `<dt>matching candidates</dt><dd>${esc(r.candidates)} — how many effects could be ours</dd>` : ''}
+      ${r.a_effect_id ? `<dt>worker A's effect</dt><dd>${esc(r.a_effect_id)} — found by its meaning, not by an id we kept</dd>` : ''}
+      ${lease.status ? `<dt>while the lease was live</dt><dd>${esc(lease.status)} · ${esc(lease.writes_attempted)} writes · ${esc(lease.reason || '')}</dd>` : ''}
     </dl>`;
   out.appendChild(head);
 
@@ -224,10 +232,17 @@ function render(r) {
   const v = el('div', 'panel');
   const verdictClass = x.committed ? 'pass' : 'fail';
   const verdictText = x.committed ? 'COMMITTED' : (x.status || 'REFUSED');
+  // The two audit facts belong next to the verdict: the script narrates them here, and a
+  // reader looking at the main column should not have to find the sidebar.
+  const proof = (r.audit_intact === undefined && r.chain_linked === undefined) ? '' :
+    `<div class="muted" style="margin-top:10px;font-size:12px">
+       rows unedited: ${r.audit_intact ? 'yes ✓' : 'NO ✗'} &nbsp;·&nbsp;
+       whole-log chain linked: ${r.chain_linked ? 'yes ✓' : 'NO ✗'}
+     </div>`;
   v.innerHTML = `<h3>Commit gate</h3>
     <div class="verdict ${verdictClass}">${esc(verdictText)}${dec.code ? ' · ' + esc(dec.code) : ''}
       ${(x.reasons || []).length ? '<ul>' + x.reasons.map(s => `<li>${esc(s)}</li>`).join('') + '</ul>' : ''}
-    </div>`;
+    </div>${proof}`;
   out.appendChild(v);
 
   // Whatever this run reported beyond the standard panels, shown as it came. The
@@ -235,7 +250,10 @@ function render(r) {
   // post-commit scan found) land here rather than behind per-sequence code.
   const shown = new Set(['name', 'mode', 'result', 'wrote', 'truth', 'audit',
                          'audit_intact', 'chain_linked', 'intent_id', 'narration',
-                         'metrics', 'claim', 'timeline']);
+                         'metrics', 'claim', 'timeline',
+                         // promoted into the head panel as named rows, so they do not
+                         // also appear here as raw JSON under a de-underscored key
+                         'events_matching', 'candidates', 'a_effect_id', 'while_lease_live']);
   const extras = Object.keys(r).filter(k => !shown.has(k));
   if (extras.length) {
     const ex = el('div', 'panel');
