@@ -1,0 +1,49 @@
+{
+  "intent_id": "C-3001",
+  "intent_hash": "ec2ad0b362c923d60f3433a28d0682f2",
+  "status": "BLOCKED",
+  "committed": false,
+  "refusal_code": "NOT_COMMITTED",
+  "reasons": [
+    "required effect CALENDAR-01 is VERIFICATION_FAILED, not VERIFIED"
+  ],
+  "evidence": {
+    "ok": true,
+    "source_app": "gmail",
+    "message_id": "msg-4",
+    "approved": true,
+    "stated_start_iso": "2026-09-15T15:00",
+    "content_hash": "4672587142f789bd8a37e610dd674d8e",
+    "observed_at": 1789295175.3074288,
+    "reasons": []
+  },
+  "effects": [
+    {
+      "intent_hash": "ec2ad0b362c923d60f3433a28d0682f2",
+      "intent_id": "C-3001",
+      "effect_id": "CALENDAR-01",
+      "app": "calendar",
+      "operation": "CREATE_EVENT",
+      "state": "VERIFICATION_FAILED",
+      "idempotency_key": "ec2ad0b362c923d60f3433a28d0682f2::CALENDAR-01",
+      "external_id": "evt-0003",
+      "attempts": 1,
+      "updated_at": 1789295175.335461
+    },
+    {
+      "intent_hash": "ec2ad0b362c923d60f3433a28d0682f2",
+      "intent_id": "C-3001",
+      "effect_id": "LINEAR-01",
+      "app": "linear",
+      "operation": "CREATE_ISSUE",
+      "state": "VERIFIED",
+      "idempotency_key": "ec2ad0b362c923d60f3433a28d0682f2::LINEAR-01",
+      "external_id": "lin-0003",
+      "attempts": 1,
+      "updated_at": 1789295175.3501492
+    }
+  ],
+  "reconciliations": [],
+  "writes_attempted": 0,
+  "model_calls": 0
+}
