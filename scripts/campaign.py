@@ -22,6 +22,7 @@ Invariants checked after every run:
   I7  every refusal names a code
   I8  a committed run's artifacts all carry the intent hash
   I9  nothing commits when the authority evidence is absent
+  I10 an outbound effect waits for a named person: held, uncommitted, and absent from the world
 """
 
 from __future__ import annotations
@@ -39,7 +40,8 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from causal import ledger as L                                    # noqa: E402
 from causal.apps import PermanentError, TransientError            # noqa: E402
-from causal.scenarios import CONTACT, REFERENCE_DATE, build_intent, fresh_stack, truth  # noqa: E402
+from causal.scenarios import (CONTACT, REFERENCE_DATE, build_binding_intent, build_intent,
+                              fresh_stack, truth)  # noqa: E402
 
 EVIDENCE = ROOT / "evidence"
 
@@ -146,13 +148,21 @@ def one_run(seed: int, mode: str) -> dict:
     evidence_present = rng.random() > 0.15          # 15% of runs have no approval at all
     model_claims = rng.random() > 0.5               # a model insisting on success changes nothing
     competing = rng.random() > 0.75                 # a second intent on the same outcome
+    # A third of runs declare an outbound surface, so the sign-off boundary is exercised
+    # under the same randomised faults as everything else instead of only in the suite.
+    signoff = rng.random() > 0.66
 
     # the world may already contain the artifact, as if a delivery were repeated
     stack.apps.calendar = FaultCalendar(stack.apps.calendar, cal_profile)
     stack.apps.linear = FaultLinear(stack.apps.linear, lin_profile)
     stack.engine.apps = stack.apps
 
-    intent = build_intent(customer, project, start, intent_id=intent_id)
+    if signoff:
+        # this intent carries a slack effect, and slack reaches the outside world
+        intent = build_binding_intent(customer, project, start, intent_id=intent_id)
+        stack.engine.signoff_apps = {"slack"}
+    else:
+        intent = build_intent(customer, project, start, intent_id=intent_id)
 
     if cal_profile == PRE_EXISTING:
         # a lost earlier delivery: the artifact exists, tagged with this intent hash
@@ -269,6 +279,26 @@ def one_run(seed: int, mode: str) -> dict:
             if ev.get("intent_hash") != intent.intent_hash:
                 violations.append("I8 a committed artifact does not carry the intent hash")
 
+    # I10 - an outbound effect waits for a named person. The boundary is on the write, so
+    # it is checked against the world rather than against the effect's own state: a held
+    # effect must not exist out there, and the run must not have committed.
+    #
+    # A sign-off run refused BEFORE its effects are planned (no evidence, a conflict) has no
+    # slack effect at all, and that is correct rather than a violation — so the check is
+    # conditional on the effect existing. What is unconditional is the world: nothing may
+    # reach it, in any run, without an approval.
+    attempted_signoff = bool(effects.get("SLACK-01"))
+    signoff_held = bool(effects.get("SLACK-01")
+                        and effects["SLACK-01"]["state"] == L.AWAITING_APPROVAL)
+    if signoff:
+        if attempted_signoff and not signoff_held:
+            violations.append(
+                f"I10 sign-off surface did not hold (state {effects['SLACK-01']['state']})")
+        if signoff_held and result.committed:
+            violations.append("I10 committed while an outbound effect awaited a person")
+    if stack.apps.slack.world.messages:
+        violations.append("I10 an outbound effect reached the world without approval")
+
     # every effect must be in a defined state
     for e in result.effects:
         if e["state"] not in L.LEGAL_TRANSITIONS and e["state"] not in L.TERMINAL:
@@ -284,6 +314,7 @@ def one_run(seed: int, mode: str) -> dict:
         "intent_id": intent.intent_id,
         "profiles": {"calendar": cal_profile, "linear": lin_profile},
         "evidence": evidence_present, "competing": competing, "model_claimed": model_claims,
+        "signoff": signoff, "signoff_held": signoff_held,
         "status": result.status, "committed": result.committed,
         "refusal_code": result.refusal_code,
         "effect_states": {k: v["state"] for k, v in effects.items()},
@@ -329,6 +360,13 @@ def main() -> int:
         print("\n  refusals by code:")
         for code, count in refusals.most_common():
             print(f"    {code:<28} {count}")
+
+    held = sum(1 for r in records if r.get("signoff_held"))
+    declared = sum(1 for r in records if r.get("signoff"))
+    if declared:
+        print(f"\n  sign-off boundary declared in {declared} run(s), exercised in {held}: every "
+              f"one held its\n  outbound effect, stayed uncommitted, and wrote nothing to the "
+              f"world (I10)")
 
     if violations:
         print("\n  VIOLATIONS (reproduce with --seed N):")

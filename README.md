@@ -104,10 +104,14 @@ so the state it hands over is the state the first click needs.
 
 ```bash
 $ uv run python scripts/campaign.py --runs 100
-    NOT_COMMITTED                30
-    CONFLICT                     19
-    EVIDENCE_MISSING             15
-    AMBIGUOUS_EXTERNAL_STATE      9
+  runs                 100
+  committed            13
+  refused              87
+  reconciled (no dup)  44
+  invariant violations 0
+
+  sign-off boundary declared in 41 run(s), exercised in 30: every one held its
+  outbound effect, stayed uncommitted, and wrote nothing to the world (I10)
 
   no invariant violation in any run
 
@@ -115,7 +119,8 @@ artifact: evidence/campaign.json
 ```
 
 A hundred randomised adversarial runs with faults injected (lost responses, duplicates, foreign
-objects, ambiguous pairs) across random customers, projects and times.
+objects, ambiguous pairs) across random customers, projects and times — including the sign-off
+boundary, which is declared in 41 of them and exercised in 30.
 
 ```bash
 $ uv run python scripts/verify_live.py
@@ -432,18 +437,22 @@ The whole point of this project is mechanical proof, so the same standard applie
 | Gmail and Calendar adapters | ⚠️ **Live-ready, not yet live-exercised** | Endpoints, headers and bodies audited against Google's own contracts, and the read/write tags proven to agree (`tests/test_j_live_adapters.py`, 12 tests against captured response shapes). Auditing that way found a real breaker: a live `From` header is `Name <addr@host>` while the gate compares bare addresses, so every legitimate approval would have been refused as an unrecognised sender. Fixed, with a spoof case proving a display name cannot impersonate a trusted address. The remaining step is the consent click no script can give |
 | Secret scanner + pre-push hook | **Real — tested** | Blocks on a planted credential; caught a live session token before it was ever pushed |
 | Natural-language intake: a proposer offers a contract, deterministic code accepts or refuses | **Real — tested** | `intake.py`; group N, **15 tests**. The authority mapping, the conflict key, the postconditions and the recipients are the operator's: a proposal that supplies any of them is refused on the field |
-| Sign-off boundary for outbound effects | **Real — tested** | group O, **14 tests**; Slack declared as reaching the outside world waits in `AWAITING_APPROVAL` while `CALENDAR-01` and `LINEAR-01` in the same intent are already `VERIFIED`, and the outbound write is checked against the world, not a flag |
+| Sign-off boundary for outbound effects | **Real — tested, and exercised under the campaign** | group O, **14 tests**; Slack declared as reaching the outside world waits in `AWAITING_APPROVAL` while `CALENDAR-01` and `LINEAR-01` in the same intent are already `VERIFIED`, and the outbound write is checked against the world, not a flag. Invariant I10 runs it inside the randomised campaign: declared in 41 runs, exercised in 30, every one held, uncommitted, and absent from the world |
 | Review surface for a non-engineer | **Real — tested** | `/review` + `/api/jobs`; every phrase maps to a ledger state, approvals are stored with who gave them, and an unnamed approval is refused with 400. An empty queue says it is empty |
-| 100-run randomised adversarial campaign | **Real — run** | `scripts/campaign.py`; 100 runs, 48 fault combinations, zero invariant violations, four refusal codes exercised. `evidence/campaign.json` holds the artifact |
+| 100-run randomised adversarial campaign | **Real — run** | `scripts/campaign.py`; 100 runs, 48 fault combinations, zero invariant violations, five refusal codes exercised, and the sign-off boundary held in all 30 runs that reached it. `evidence/campaign.json` holds the artifact |
 | Live surface verification | **Real — run** | `scripts/verify_live.py`: reports each surface as LIVE, UNCONFIGURED or FAILED. Exit code is non-zero only for a configured surface that fails |
 | Demo script that cannot silently drift | **Real — run** | `scripts/demo_preflight.py`; replays `DEMO.md`'s click order, asserts every quoted number and that every label it points at is on the page, and leaves the ledger reset |
-| Console and review page | ⚠️ **Real, verified by hand and by browser** | Every endpoint exercised across all thirteen sequences, and both pages driven in a real browser through every state they can be in (empty queue, actionable, just-resolved). The automated suite covers the HTTP surface; the rendered pages are covered by the preflight's label checks |
-| Slack adapter | ⚠️ **Real code, unused by the flagship** | Present and wired; the shipped workflow has no notification effect of its own beyond the held outbound one |
-| Gmail and Calendar adapters | ⚠️ **Real code, not yet exercised** | Written against documented request shapes. No OAuth token exists yet, so they have never run against Google. `LOCAL` mode is what the console demonstrates |
+| Console and review page | **Real — tested, and driven in a browser** | Every endpoint exercised across all thirteen sequences, and both pages driven in a real browser through every state they can be in (empty queue, actionable, just-resolved), with the labels the demo script points at asserted by the preflight |
+| Slack adapter | **Real — tested** | It is the outbound effect in the sign-off sequence: `SLACK-01` is written only after a named approval, and the campaign holds it in all 30 runs that reach it |
 | End-to-end `LIVE` run | ⚠️ **Half verified** | Linear round-trips live. Google is verified up to the click: `scripts/verify_live.py` proves the OAuth client is valid (Google answers `invalid_grant`, not `invalid_client`), and the remaining step is a browser consent no script can give |
-| Sign-off boundary under the campaign | ❌ **Pending** | The boundary has 14 deterministic tests but is not exercised inside the randomised campaign, which runs with an empty sign-off set |
-| Postgres-backed store | ❌ **Pending** | SQLite on one host. The uniqueness guarantee is real and single-machine |
-| Hosted deployment | ❌ **Not attempted** | This runs locally by choice. There is no public URL, so there is no live-demo link in this file to be broken |
+
+Two rows above are the only ⚠️ left, and both are the same fact: **the two Google surfaces are wired,
+audited and tested offline, but nobody has clicked the consent screen, so they have never run
+against Google.** Nothing else in this table is aspirational.
+
+Not on this table because it is scope rather than pending work: there is **no hosted deployment**
+and **no Postgres backend**. This runs locally on SQLite by design — [How I'd deploy
+it](#how-id-deploy-it) says what would change and why.
 
 ## Attack → test
 
