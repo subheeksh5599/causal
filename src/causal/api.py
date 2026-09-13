@@ -129,7 +129,7 @@ def intake_endpoint(body: dict) -> JSONResponse:
         payload["intent"] = {
             "intent_id": it.intent_id,
             "conflict_key": it.conflict_key,
-            "authority": it.authority,
+            "authority": dict(it.authority),
             "effects": [e.effect_id for e in it.effects],
             "digest": (it.intent_hash or "")[:16],
         }
