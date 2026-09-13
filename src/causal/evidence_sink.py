@@ -69,11 +69,34 @@ class OutcomeStore:
         if refusal_code == "CONFLICT":
             prevented += 1
         with self._lock:
+            # A second run on the same intent must not UNREPORT what an earlier one
+            # established. Pressing a sequence button again after it committed records an
+            # IDEMPOTENT result — correct about the engine, wrong as a replacement for the
+            # intent's history: the committed flag, the reconciliation, the duplicate it
+            # prevented and the model calls it made are all facts that happened, so they
+            # only ever move upward. The effects of the run that committed are kept for the
+            # same reason: the later pass wrote nothing, so its rows are emptier.
             self._conn.execute(
-                "INSERT OR REPLACE INTO outcomes (intent_id, intent_hash, status, committed,"
+                "INSERT INTO outcomes (intent_id, intent_hash, status, committed,"
                 " refusal_code, effects_json, reconciled, duplicates_prevented,"
                 " verification_failures, model_calls, created_at)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+                " ON CONFLICT(intent_id) DO UPDATE SET"
+                "   intent_hash = excluded.intent_hash,"
+                "   status = excluded.status,"
+                "   committed = MAX(outcomes.committed, excluded.committed),"
+                "   reconciled = MAX(outcomes.reconciled, excluded.reconciled),"
+                "   duplicates_prevented = MAX(outcomes.duplicates_prevented,"
+                "                                 excluded.duplicates_prevented),"
+                "   verification_failures = MAX(outcomes.verification_failures,"
+                "                                 excluded.verification_failures),"
+                "   model_calls = MAX(outcomes.model_calls, excluded.model_calls),"
+                "   effects_json = CASE WHEN outcomes.committed > excluded.committed"
+                "                       THEN outcomes.effects_json"
+                "                       ELSE excluded.effects_json END,"
+                "   refusal_code = CASE WHEN excluded.refusal_code = ''"
+                "                       THEN outcomes.refusal_code"
+                "                       ELSE excluded.refusal_code END",
                 (intent_id, intent_hash, status, int(committed), refusal_code,
                  json.dumps(effects), reconciled, prevented, vfail, int(model_calls),
                  time.time()),

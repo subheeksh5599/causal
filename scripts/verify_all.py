@@ -79,10 +79,17 @@ def main() -> int:
     badge = re.search(r"tests-(\d+)%20passing", md)
     report.add("badge count is real", bool(badge) and int(badge.group(1)) == actual_tests,
                f"badge says {badge.group(1) if badge else '?'}, suite says {actual_tests}")
-    summary = re.search(r"^(\d+) passed,", md, re.M)
-    report.add("quoted pytest line is real",
-               bool(summary) and int(summary.group(1)) == actual_tests,
-               f"README says {summary.group(1) if summary else '?'}")
+    summary = re.search(r"^(\d+) passed(?:, (\d+) skipped)?,", md, re.M)
+    if summary:
+        # A skipped test is part of the suite, so the quoted line is compared as
+        # passed + skipped. Comparing only `passed` made an honest skip look like a stale
+        # number, which is the opposite of what this gate is for.
+        quoted = int(summary.group(1)) + int(summary.group(2) or 0)
+        detail = f"README says {summary.group(1)} passed" + (
+            f" + {summary.group(2)} skipped" if summary.group(2) else "")
+    else:
+        quoted, detail = None, "no quoted pytest line found"
+    report.add("quoted pytest line is real", quoted == actual_tests, detail)
     # the per-file table must add up to the same total
     files = re.findall(r"^tests/[\w_]+\.py\s+(\d+)$", md, re.M)
     total = sum(int(n) for n in files)

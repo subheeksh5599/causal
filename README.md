@@ -1,14 +1,18 @@
 <div align="center">
 
-&nbsp;
-
-[![Tests](https://img.shields.io/badge/tests-237%20passing-10b981)](#tests)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Surfaces](https://img.shields.io/badge/surfaces-Gmail%20%2B%20Calendar%20%2B%20Linear-4DA2FF)](#the-three-apps)
-[![Campaign](https://img.shields.io/badge/campaign-100%20runs%20%2F%200%20violations-2563eb)](#what-the-binding-layer-measures)
-![Stack](https://img.shields.io/badge/Python%203.13%20%2B%20FastAPI%20%2B%20SQLite-1f1f23)
+# CAUSAL
 
 ### Intent-bound cross-app execution — commit once, prove once, never double-act.
+
+[![Tests](https://img.shields.io/badge/tests-240%20passing-10b981)](#tests)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Campaign](https://img.shields.io/badge/campaign-100%20runs%20%2F%200%20violations-2563eb)](#what-the-binding-layer-measures)
+[![Surfaces](https://img.shields.io/badge/surfaces-Gmail%20%2B%20Calendar%20%2B%20Linear-4DA2FF)](#the-three-apps)
+![Stack](https://img.shields.io/badge/Python%203.13%20%2B%20FastAPI%20%2B%20SQLite-1f1f23)
+
+[![▶ Watch the demo](https://img.shields.io/badge/%E2%96%B6%20Watch%20the%20demo-2%3A08-FF0000?labelColor=1f1f23)](https://youtu.be/xGl7tstoXq0) [![Local copy](https://img.shields.io/badge/Local%20copy-docs%2Fmedia%2Fcausal--demo.mp4-14151a?labelColor=0f1420)](docs/media/causal-demo.mp4) [![Honesty table](https://img.shields.io/badge/Honesty%20table-what%20is%20real%20vs%20pending-14151a?labelColor=0f1420)](#whats-real-vs-pending--the-honesty-table) [![Run it](https://img.shields.io/badge/Run%20it-one%20command-14151a?labelColor=0f1420)](#-see-it-in-one-command)
+
+</div>
 
 Most multi-app agents answer the easy question: _did the API call succeed?_ CAUSAL answers the harder one — **can you prove that each external effect is the authorised, conflict-free consequence of the one intent you approved?** It gives agents idempotent commit semantics over APIs that provide no idempotency primitive, by binding an intent to an independently observed effect rather than trusting a response. Stripe takes an idempotency key. Gmail, Calendar and Linear do not — they never saw your intent id, they do not participate in your transaction, and when a response is lost there the only question left is not _did my request succeed_ but _does an effect matching this intent already exist out there_. When nobody can prove which effect is ours, CAUSAL refuses to commit and says so.
 
@@ -16,47 +20,45 @@ Most multi-app agents answer the easy question: _did the API call succeed?_ CAUS
 EFFECTED  ≠  VERIFIED  ≠  COMMITTED
 ```
 
-**[ ▶ Watch the two-minute demo ↓ ](#-demo)** &nbsp;·&nbsp; **[ Architecture ↗ ](#architecture)** &nbsp;·&nbsp; **[ The commit loop, step by step ↗ ](#the-commit-loop-step-by-step)** &nbsp;·&nbsp; **[ What's real vs pending ↗ ](#whats-real-vs-pending--the-honesty-table)** &nbsp;·&nbsp; **[ Run it locally ↗ ](#quick-start)**
-
-</div>
-
----
+There is no `COMMITTED_WITH_WARNINGS`. Either the required outcome was read back out of the system that owns it and belongs to exactly one intent, or the job is refused and says why.
 
 ## ▶ Demo
 
-**→ [Watch the two-minute demo](PASTE_VIDEO_LINK_HERE)**
+[![▶ Watch the demo — 2:08, real screen capture of the running console](docs/media/causal-demo-poster.png)](https://youtu.be/xGl7tstoXq0)
 
-Two minutes, one console, six clicks. Every panel in it is filled by a real run of the same
-engine the test suite drives — there is no mock state and no pre-recorded screen.
+**[▶ Watch the demo (2:08)](https://youtu.be/xGl7tstoXq0)** &nbsp;·&nbsp; **[ Local copy ↗ ](docs/media/causal-demo.mp4)** &nbsp;·&nbsp; **[ What's real vs pending ↗ ](#whats-real-vs-pending--the-honesty-table)** &nbsp;·&nbsp; **[ Run it yourself ↗ ](#-see-it-in-one-command)**
 
-What the video shows, in order:
+_One take. Every panel is filled by a real run of the same engine the test suite drives — no mock state, no pre-recorded screen, no animation._ The narration walks the whole argument: worker A writes the calendar event and dies before recording it, worker B takes the job over and finds A's effect **by its meaning** instead of retrying; the hash-chained audit proves the record was not edited (`rows unedited: yes · whole-log chain linked: yes`); three effects could be ours and the system **refuses** rather than guess; the one effect that leaves the company waits in `AWAITING_APPROVAL` while the other two are already confirmed, and a person approves it by name on `/review`; then a request in words is compiled to a contract and a proposal that tries to widen its own authority is **refused on the field, by name**.
 
-1. **A crash recovered without a duplicate.** Worker A writes the calendar event and dies
-   before recording it. Worker B takes the job over, does **not** retry, finds A's event by
-   its meaning, adopts it, and finishes only what was missing — `"calendar":0` writes, and
-   exactly one event in the world.
-2. **A refusal.** Two identical events exist and ownership cannot be proven, so the job
-   **blocks** with an `AMBIGUOUS` chip and a candidate count, having had apparently
-   successful evidence in hand.
-3. **A person approving what leaves the building.** Calendar and Linear are already
-   verified; the one effect that reaches the outside world waits in `AWAITING_APPROVAL`
-   until somebody approves it by name.
-4. **A model proposing a contract and being refused.** A request in words becomes a frozen
-   contract, then the same request with a proposal that reroutes authority and widens the
-   recipients is **refused on the field, by name**.
-5. **The counters.** Computed by walking every commit and re-reading the ledger, not typed
-   into the page.
+Recorded before submission, against the running console. `scripts/demo_preflight.py` walks the same click order and checks every number and every on-screen label the script quotes.
 
-_Recorded before submission. `scripts/verify_all.py` refuses to pass while the link above is
-still unfilled, so the repository cannot ship with an empty slot in it._
+## The 20-second pitch
 
----
+An ops lead approves one kickoff. She gets two calendar invites, two tasks and a thread asking which one is real. Nothing errored. Every dashboard is green — because the duplicate is invisible by construction: the retry that caused it fires exactly when the audit trail is least reliable.
+
+The second wound is quieter. A model drafts the notification for Wednesday. The approval said Tuesday. The API accepts it, the schema validates, the job goes green, and the wrong commitment now lives in three systems with a success status attached to it.
+
+```mermaid
+flowchart TD
+    A["one operator intent<br/>(approval + frozen contract)"] --> B["registry: one active intent<br/>per real-world outcome"]
+    B --> C["write each required effect once<br/>UNKNOWN never retries"]
+    C --> D["bind: find the effect by its MEANING<br/>0 candidates → write · 1 → adopt · 2+ → refuse"]
+    D --> E["independent read-back<br/>different call than the writer"]
+    E --> F{"every required effect<br/>VERIFIED and bound?"}
+    F -- yes --> G["COMMITTED<br/>hash-chained audit records it"]
+    F -- no --> H["REFUSED / BLOCKED / AMBIGUOUS /<br/>AWAITING_APPROVAL — with the reason"]
+    G -. outcomes are facts .-> B
+```
 
 ## Table of contents
 
 - [▶ Demo](#-demo)
+- [The 20-second pitch](#the-20-second-pitch)
 - [Table of contents](#table-of-contents)
-- [Quick start](#quick-start)
+- [▶ See it in one command](#-see-it-in-one-command)
+- [Screenshots](#screenshots)
+- [Verify every claim in one command](#verify-every-claim-in-one-command)
+- [What CAUSAL is NOT](#what-causal-is-not)
 - [The problem I set out to solve](#the-problem-i-set-out-to-solve)
 - [What I built](#what-i-built)
 - [Architecture](#architecture)
@@ -68,6 +70,7 @@ still unfilled, so the repository cannot ship with an empty slot in it._
 - [Who approves what](#who-approves-what)
 - [Engineering decisions & the traps that taught me something](#engineering-decisions--the-traps-that-taught-me-something)
 - [What's real vs pending — the honesty table](#whats-real-vs-pending--the-honesty-table)
+- [Attack → test](#attack--test)
 - [The app](#the-app)
 - [Prior art, credited](#prior-art-credited)
 - [What this cannot do](#what-this-cannot-do)
@@ -79,89 +82,105 @@ still unfilled, so the repository cannot ship with an empty slot in it._
 - [Results and supporting records](#results-and-supporting-records)
 - [Tests](#tests)
 - [License](#license)
----
 
-## Quick start
-
-### Requirements
-
-- Python `3.13` and [`uv`](https://docs.astral.sh/uv/) — that is the whole list
-- No Node, no bundler, no build step. The UI is two static HTML files served by the same process
-- Nothing is needed in the environment to run the tests or the console; `LOCAL` mode is entirely in-process
-
-### Install
+## ▶ See it in one command
 
 ```bash
-git clone <this repository>
-cd causal
-uv sync
+$ uv run pytest tests/
+239 passed, 1 skipped, 1 warning in 3.63s          # 240 tests, thirteen files
 ```
-
-### Verify the repository
 
 ```bash
-uv run python scripts/verify_all.py
+$ uv run python scripts/demo_preflight.py
+81 claims checked, all match.
+The ledger has just been reset, so the first click will produce those numbers.
+Start recording now — and do not press 'reset ledger' again.
 ```
 
-That is the gate: it runs the test suite, the 100-run randomised campaign, the secret scan
-and the README anchor check — and then it reads the numbers this README prints and **fails
-if any of them has drifted from reality**. A stale count in a document is the same class of
-problem as a stale count in a metric, and twice during this build a hand-copied number went
-wrong, so the numbers here are checked rather than trusted. Use `--quick` to skip the
-campaign.
-
-A full pass looks like this:
-
-```
-verifying the claims in README.md
-
-  pass  test suite passes                  237 passed
-  pass  badge count is real                badge says 237, suite says 237
-  pass  quoted pytest line is real         README says 237
-  pass  per-file table adds up             12 rows summing to 237
-  pass  campaign: zero violations          100 runs
-  pass  secret scan clean                  SECRET SCAN: clean — 60 tracked file(s)
-  pass  README anchors resolve             all anchors
-  pass  demo video link is present         filled
-
-all 8 gates passed.
-```
-
-### Run the agent
+It replays the demo's exact click order against the running console, asserts every number the
+script quotes (including every external id and write count in each effects table), asserts that
+every label the script points at is really on the page, and then **resets the ledger again** —
+so the state it hands over is the state the first click needs.
 
 ```bash
-uv sync
-uv run uvicorn causal.api:app --port 8000
+$ uv run python scripts/campaign.py --runs 100
+    NOT_COMMITTED                30
+    CONFLICT                     19
+    EVIDENCE_MISSING             15
+    AMBIGUOUS_EXTERNAL_STATE      9
+
+  no invariant violation in any run
+
+artifact: evidence/campaign.json
 ```
 
-Then open `http://127.0.0.1:8000/fresh` for the operator console and
-`http://127.0.0.1:8000/review` for the review page. `/fresh` empties the ledger and lands
-you on the console, so every number `DEMO.md` quotes holds from the first click. The header
-reads `ledger · fresh` when you are on a clean one; a plain `/` keeps the previous ledger on
-purpose, and says so.
+A hundred randomised adversarial runs with faults injected (lost responses, duplicates, foreign
+objects, ambiguous pairs) across random customers, projects and times.
 
-### Useful commands
+```bash
+$ uv run python scripts/verify_live.py
+  linear    LIVE          reachable, issue read back through a different operation
+  gmail     UNCONFIGURED  GOOGLE_REFRESH_TOKEN unset — one consent click
+  calendar  UNCONFIGURED  GOOGLE_REFRESH_TOKEN unset — one consent click
+```
 
-| Command | Purpose | Touches |
-|---|---|---|
-| `uv run python scripts/verify_all.py` | The release gate: suite, campaign, scan, anchors, claim drift | Offline |
-| `uv run pytest tests/` | 237 tests, ~3.7s | Offline |
-| `uv run python scripts/demo.py` | The six original sequences, printed with narration | Offline |
-| `uv run uvicorn causal.api:app --port 8000` | The console and the review page | Offline |
-| `uv run python scripts/demo_preflight.py` | Walks `DEMO.md`'s click order, checks every number it quotes, and checks every label it points at is really on the page. Leaves the ledger reset and ready to record | Offline, needs the console running |
-| `uv run python scripts/campaign.py --runs 100` | Randomised adversarial runs with injected faults | Offline |
-| `uv run python scripts/verify_live.py` | Which surfaces are actually reachable, and what is missing for the rest | Read-only HTTPS |
-| `uv run python scripts/verify_live.py --write` | The same, plus a real create-and-read-back per surface | Writes to the live services |
-| `uv run python scripts/live_run.py --find-only` | Search the real mailbox and adjudicate the approval | Read-only HTTPS |
-| `uv run python scripts/live_run.py` | The flagship against the real three apps | Writes to Calendar and Linear |
-| `uv run python scripts/secret_scan.py` | Working tree, tracked files, full git history, `.env` values | Offline |
-| `uv run python scripts/readme_toc.py --check` | Proves no anchor in this file is dead | Offline |
+Every surface reports LIVE, UNCONFIGURED or FAILED, and the exit code is non-zero only for a
+surface that is configured and failing. Nothing dresses an unexercised surface up as live.
 
-**[Full command reference](#full-command-reference)** below has the environment variables
-and the live-surface details. Everything in the table is safe to run as-is except the two
-rows marked as writing.
+## Screenshots
 
----
+Real captures from the recording above — no doctored image, no mock state. Each one is a frame of
+the same take, and the panel it shows is the engine's own output.
+
+**The console as it commits.** The effects table after a crash recovery: the calendar and the task
+both `VERIFIED`, each read back through a different call than the one that wrote it, with the
+write-attempt count beside each row (`0` for the effect worker A had already created).
+
+![The console after a crash recovery](docs/media/causal-console-committed.png)
+
+**The held outbound effect.** The same intent: `SLACK-01` sits in `AWAITING_APPROVAL` with **0**
+writes while the calendar and the task are already confirmed, and the commit gate refuses the job —
+`BLOCKED` — because a required effect is not verified. The effect that reaches the outside world
+waited for a person; the other two did not.
+
+![The effect held for a person](docs/media/causal-console-held.png)
+
+**A person approving what leaves the building.** The approval is stored with the name of whoever
+gave it — `dana.reyes@acme.example` — and the same three states in words appear beside it, because
+an unnamed approval is refused.
+
+![The review page and the recorded approval](docs/media/causal-review-approval.png)
+
+## Verify every claim in one command
+
+```bash
+$ uv run python scripts/verify_all.py
+```
+
+The release gate. It runs the test suite, the randomised campaign, the secret scanner and the
+anchor check, and then reads this file and the demo script back to test their claims against
+reality — so a number in this README that stops being true fails a command rather than shipping.
+
+## What CAUSAL is NOT
+
+Not a workflow engine. Not an agent framework. Not an observability tool. Not "logging with
+retries". Not idempotency keys — those require the API to cooperate, and Gmail and Calendar never
+saw the intent id. Those categories *describe what happened*; CAUSAL decides whether what happened
+**counts**.
+
+The output is never a confidence score. The output is a verdict with the evidence attached:
+
+```
+COMMITTED
+  CALENDAR-01  calendar  VERIFIED  ext-0001  0 writes
+  LINEAR-01    linear    VERIFIED  lin-0001  1 write
+  SLACK-01     slack     VERIFIED  msg-0001  1 write
+  rows unedited: yes ✓   whole-log chain linked: yes ✓
+
+BLOCKED
+  required effect CALENDAR-01 is AMBIGUOUS, not VERIFIED
+  3 matching candidates — how many effects could be ours
+```
 
 ## The problem I set out to solve
 
@@ -232,6 +251,7 @@ On top of that: a conflict registry that allows one active intent per real-world
 | `reconcile.py` | Deterministic reconciliation levels; `AMBIGUOUS` escalates |
 | `postconditions.py` | The registered checkers a required effect must satisfy |
 | `audit.py` | Hash-chained event log |
+| `evidence_sink.py` | The persisted per-intent outcomes the counters are read from |
 | `plain.py` | The same states in words, for the review page |
 | `adapters.py` | Local fakes, live clients and twin clients behind one interface |
 
@@ -348,6 +368,9 @@ SLACK-01     AWAITING_APPROVAL   waiting for a person to approve it
 
 The same intent. Two effects done, one held, and the commit refused with `AWAITING_APPROVAL` rather than a generic failure. The gate is on the write, so the unapproved post is checked against the world (`slack.world.messages == []`), not against a flag. `/review` is the page a non-engineer reads: the same states, in words, with an Approve button that stores **who** approved — an unnamed approval is refused with 400, because an unattributed approval is not evidence.
 
+When nothing is waiting, that page says so in words rather than leaving a reader with one
+inspect button and no explanation of why the queue is empty.
+
 ## Engineering decisions & the traps that taught me something
 
 **The conflict key refuses to contain the disputed fact.** The key is `CUSTOMER::PROJECT::EVENT` with no time in it. The obvious design includes the time — and it is wrong, because the time is exactly what two competing intents disagree about. Put it in the key and both intents get different keys, the collision never fires, and the conflict detector becomes dead code that always reports CLEAR. The first version of this file shipped that bug in the design document. The key excludes the disputed value; the scope holds it, and the authority map adjudicates it.
@@ -363,6 +386,12 @@ The same intent. Two effects done, one held, and the commit refused with `AWAITI
 **Two counters disagreed and I had to pick a truth.** The API reported `duplicates_prevented: 1`, the CLI harness reported `2`. The metric counted reconciliations and ignored conflict refusals — two different mechanisms doing the same job. Both now count, and the two report identical numbers.
 
 **The demo did not reproduce, which meant it was not evidence.** It reused its ledger, so a second run found every intent already committed, returned `IDEMPOTENT` everywhere, and printed `commits: 0` instead of `2`. A judge pressing the button twice would have seen different results and been right to distrust both. It now starts from a clean ledger, and a test runs the whole set twice and demands byte-identical summaries.
+
+**The counters could be made to go backwards, and the sentence next to them says they cannot.** A recorded take exposed it: after approving the outbound effect, pressing that sequence button again is a natural thing to do — and the panel's `committed` count fell from 2 to 1 while the ledger still held two commits. The store was keyed one row per intent and written with `INSERT OR REPLACE`, so the second run's honest `IDEMPOTENT` result *replaced* the intent's committed one. The narration reads out loud that the counters are computed by walking every commit and re-reading the ledger; that sentence is now true in the code — state comes from the ledger, and the per-intent record only ever moves upward. Three tests hold it, including one that presses the sequence twice and demands the same number.
+
+**The demo's own preflight left the ledger dirty.** It reset, walked the whole click order to prove the numbers, and then handed back a ledger holding three intents and two commits — so the first click of the recording reported `IDEMPOTENT`, with a world-count of five events where the script says one. It now resets at the end too, and the console shows which ledger you are on: `ledger · fresh` or `ledger · 3 intents · 2 committed`, with a bar naming the state. A human who cannot tell which ledger they are on will conclude the demo is broken, and they will be reading the screen correctly.
+
+**The table-of-contents generator deleted thirty sections of this file.** It rewrote "the block between the TOC heading and the next `---` rule" — and this file separates sections with headings, so the next rule was inside the Tests table, hundreds of lines down. It bounded on the next heading now and refuses the write if the heading count changes. A tool whose job is keeping this file honest has to be unable to eat it.
 
 **Frozen authority is an object, not a promise.** Hashing the authority map while leaving it a plain `dict` meant anything holding a reference could rewrite it without changing the hash — authority changed, hash unchanged. It is a mapping proxy now.
 
@@ -398,21 +427,39 @@ The whole point of this project is mechanical proof, so the same standard applie
 | Authored, hashed exclusivity relation | **Real — tested** | `binding.EXCLUSIVITY_POLICY` v1; renew ⊥ cancel_renew, order-insensitive, digest changes if the table does |
 | Post-commit duplicate scan | **Real — tested** | `engine.post_commit_scan`; flags and escalates, never reverses a commit |
 | Hash-chained audit, tamper detection | **Real — tested** | `audit.py`; verified by editing a row and watching both checks fail |
+| Counters that cannot go backwards | **Real — tested** | state is read off the registry, and a per-intent record only moves upward; `tests/test_k_counters.py`, **3 tests**, one of which presses a committed sequence again |
 | Linear adapter | **Real — verified live** | issue `SUB-5` created via GraphQL, then found through a *different* operation, plus a negative control that returns zero |
 | Gmail and Calendar adapters | ⚠️ **Live-ready, not yet live-exercised** | Endpoints, headers and bodies audited against Google's own contracts, and the read/write tags proven to agree (`tests/test_j_live_adapters.py`, 12 tests against captured response shapes). Auditing that way found a real breaker: a live `From` header is `Name <addr@host>` while the gate compares bare addresses, so every legitimate approval would have been refused as an unrecognised sender. Fixed, with a spoof case proving a display name cannot impersonate a trusted address. The remaining step is the consent click no script can give |
 | Secret scanner + pre-push hook | **Real — tested** | Blocks on a planted credential; caught a live session token before it was ever pushed |
 | Natural-language intake: a proposer offers a contract, deterministic code accepts or refuses | **Real — tested** | `intake.py`; group N, **15 tests**. The authority mapping, the conflict key, the postconditions and the recipients are the operator's: a proposal that supplies any of them is refused on the field |
 | Sign-off boundary for outbound effects | **Real — tested** | group O, **14 tests**; Slack declared as reaching the outside world waits in `AWAITING_APPROVAL` while `CALENDAR-01` and `LINEAR-01` in the same intent are already `VERIFIED`, and the outbound write is checked against the world, not a flag |
-| Review surface for a non-engineer | **Real — tested** | `/review` + `/api/jobs`; every phrase maps to a ledger state, approvals are stored with who gave them, and an unnamed approval is refused with 400 |
+| Review surface for a non-engineer | **Real — tested** | `/review` + `/api/jobs`; every phrase maps to a ledger state, approvals are stored with who gave them, and an unnamed approval is refused with 400. An empty queue says it is empty |
 | 100-run randomised adversarial campaign | **Real — run** | `scripts/campaign.py`; 100 runs, 48 fault combinations, zero invariant violations, four refusal codes exercised. `evidence/campaign.json` holds the artifact |
-| Live surface verification | **Real — run** | `scripts/verify_live.py`: reports each surface as LIVE, UNCONFIGURED or FAILED. Currently 2 live (Linear, Google OAuth client), 2 unconfigured. Exit code is non-zero only for a configured surface that fails |
-| Console and review page | ⚠️ **Real, verified by hand** | Every endpoint exercised with curl across all thirteen sequences, including `/review`, `/api/jobs`, `/api/approve` and `/api/intake`; the HTTP surface is covered by the automated suite, the rendered pages are not |
-| Slack adapter | ⚠️ **Real code, unused by the flagship** | Present and wired; the shipped workflow has no notification effect |
+| Live surface verification | **Real — run** | `scripts/verify_live.py`: reports each surface as LIVE, UNCONFIGURED or FAILED. Exit code is non-zero only for a configured surface that fails |
+| Demo script that cannot silently drift | **Real — run** | `scripts/demo_preflight.py`; replays `DEMO.md`'s click order, asserts every quoted number and that every label it points at is on the page, and leaves the ledger reset |
+| Console and review page | ⚠️ **Real, verified by hand and by browser** | Every endpoint exercised across all thirteen sequences, and both pages driven in a real browser through every state they can be in (empty queue, actionable, just-resolved). The automated suite covers the HTTP surface; the rendered pages are covered by the preflight's label checks |
+| Slack adapter | ⚠️ **Real code, unused by the flagship** | Present and wired; the shipped workflow has no notification effect of its own beyond the held outbound one |
 | Gmail and Calendar adapters | ⚠️ **Real code, not yet exercised** | Written against documented request shapes. No OAuth token exists yet, so they have never run against Google. `LOCAL` mode is what the console demonstrates |
 | End-to-end `LIVE` run | ⚠️ **Half verified** | Linear round-trips live. Google is verified up to the click: `scripts/verify_live.py` proves the OAuth client is valid (Google answers `invalid_grant`, not `invalid_client`), and the remaining step is a browser consent no script can give |
 | Sign-off boundary under the campaign | ❌ **Pending** | The boundary has 14 deterministic tests but is not exercised inside the randomised campaign, which runs with an empty sign-off set |
 | Postgres-backed store | ❌ **Pending** | SQLite on one host. The uniqueness guarantee is real and single-machine |
 | Hosted deployment | ❌ **Not attempted** | This runs locally by choice. There is no public URL, so there is no live-demo link in this file to be broken |
+
+## Attack → test
+
+| Attack | Answer | Where it is enforced |
+|---|---|---|
+| "It's just idempotency keys" | Gmail and Calendar never see the intent id and do not participate in the transaction; the effect is identified after the fact by its meaning, and **two matches means refusal, not a guess** | `binding.py`, `reconcile.py`; the four rates in `test_g_binding.py` |
+| "A retry will duplicate the effect" | `UNKNOWN` never retries — it reads before it acts, and reconciles at `EXACT / LIKELY` instead of writing again | `engine.py`, `reconcile.py`; group H |
+| "Just trust the 200 and mark it done" | The write response is never given to the verifier, and a test lies on it (`WRONG-ID-FROM-THE-WRITE-RESPONSE`) and demands the real object still verifies | `postconditions.py`; group G |
+| "The model says it succeeded" | A model cannot cause any state transition: the decision modules import no model client, and the `lying_model` sequence counts the calls | `test_f_campaign.py`, group J |
+| "The model widened its own authority" | Six fields are reserved; a proposal that sets authority, recipients, the conflict key, the postconditions, the hash or the status is refused **on the field** before anything freezes | `intake.py`; group N |
+| "Two intents on the same outcome" | One active intent per outcome is a partial unique index in the database, not a check-then-act | `registry.py`; group E |
+| "It committed something unverified" | `committed` is counted off the ledger, and `false_commits` is computed by walking every commit and re-reading its effects | `api._metrics`; `test_k_counters.py` |
+| "The counters can be made to lie by pressing twice" | The per-intent record only moves upward and the state counters come from the registry | `test_k_counters.py` |
+| "The audit log was edited" | Two independent claims: rows unchanged per intent, and the whole log linked. Both are proven by editing a row and watching them fail | `audit.py` |
+| "The README's numbers are aspirational" | The gate reads this file back and tests its claims against the artifacts, and the demo walker tests the script's numbers against the running console | `scripts/verify_all.py`, `scripts/demo_preflight.py` |
+| "A credential will leak" | The scanner reads the working tree, every tracked file, the full git history **and the literal `.env` values**, and the pre-push hook refuses rather than discourages | `scripts/secret_scan.py`, `.git/hooks/pre-push` |
 
 ## The app
 
@@ -425,7 +472,9 @@ clean ledger, or `/` to keep the previous one.
 
 **The review page** (`/review`) is the same engine for somebody who is not an engineer: jobs in words, what each system confirmed, what is waiting on a person, and an Approve button that records who approved.
 
-The environment badge reads `LOCAL`, `LIVE` or `TWIN` from `CAUSAL_MODE`. A screen is never ambiguous about which kind of services produced what is on it.
+The environment badge reads `LOCAL`, `LIVE` or `TWIN` from `CAUSAL_MODE`, and the ledger badge
+reads `fresh` or the real intent and commit counts. A screen is never ambiguous about which kind
+of services produced what is on it, or which ledger you are looking at.
 
 ## Prior art, credited
 
@@ -483,7 +532,7 @@ causal/
 │   ├── reconcile.py       deterministic reconciliation levels
 │   ├── postconditions.py  registered checkers per effect
 │   ├── audit.py           hash-chained log
-│   ├── evidence_sink.py   the outcome store the counters are computed from
+│   ├── evidence_sink.py   the per-intent outcome store the counters read from
 │   ├── plain.py           the same states in words
 │   ├── apps.py            the in-process fakes (mail, calendar, linear, slack)
 │   ├── adapters.py        local fakes, live clients, twin clients
@@ -491,7 +540,8 @@ causal/
 │   ├── api.py             the console and review API
 │   ├── console.html       the operator console
 │   └── review.html        the page a non-engineer reads
-├── tests/                 twelve files, 237 tests
+├── tests/                 thirteen files, 240 tests
+├── docs/media/            the demo recording, its poster and the screenshots above
 ├── scripts/
 │   ├── demo.py            the original six sequences, printed with narration
 │   ├── verify_all.py      the release gate: suite, campaign, scan, anchors, claim drift
@@ -508,6 +558,7 @@ causal/
 ├── EVALUATION.md          fault matrix and what is measured
 ├── LIMITATIONS.md         what this cannot do
 ├── DEMO.md                the two-minute demo, clicks and narration
+├── SUBMISSION.md          the system and reliability brief
 ├── LICENSE                MIT
 └── pyproject.toml
 ```
@@ -556,18 +607,19 @@ Not deployed, and that is the honest state rather than a broken link.
 
 ## Results and supporting records
 
-Nothing below is a screenshot. Each row is an artifact in this repository that a judge can
-open and check, and where a prose summary and an artifact ever disagree, **the artifact is
-the authority**.
+Nothing below is a screenshot standing in for evidence. Each row is an artifact in this repository that a judge can open and check, and where a prose summary and an artifact ever disagree, **the artifact is the authority**.
 
 | Evidence | What it supports |
 |---|---|
+| **[▶ The demo recording](https://youtu.be/xGl7tstoXq0)** (2:08, [local copy](docs/media/causal-demo.mp4)) | The whole argument, run live: recovery without a duplicate, the refusal, the held outbound effect, the approval by name, the intake refusal |
+| `docs/media/` | The poster and the three screenshots above, extracted from that recording |
 | `uv run python scripts/verify_all.py` | The gate: suite, campaign, secret scan, anchors, and that the numbers in this file match reality |
-| `tests/` — 237 tests, twelve files | Every claim in the honesty table, each group naming the artifact behind it |
+| `tests/` — 240 tests, thirteen files | Every claim in the honesty table, each group naming the artifact behind it |
 | `evidence/campaign.json` | The 100-run randomised campaign: 48 fault combinations, zero invariant violations |
 | `tests/test_g_binding.py` | The four measured rates: semantic recovery, false binding, duplicate prevention, ambiguity refusal |
+| `tests/test_k_counters.py` | That the panel cannot report fewer commits than the ledger holds, including on a second press |
 | `evidence/summary.json`, `evidence/sequence-*.json` | The last CLI run's counters and per-sequence output |
-| `DEMO.md` + `scripts/demo_preflight.py` | The two-minute demo, and a walk of its numbers and its on-screen labels against the running console |
+| `DEMO.md` + `scripts/demo_preflight.py` | The demo, and a walk of its numbers and its on-screen labels against the running console |
 | `SUBMISSION.md` | The system and reliability brief, including what is not claimed |
 | `ARCHITECTURE.md`, `EVALUATION.md`, `LIMITATIONS.md` | The module map, the fault matrix, and the open limits |
 | `.git/hooks/pre-push`, `scripts/secret_scan.py` | That no credential can be pushed: tree, tracked files, full history and `.env` values |
@@ -577,30 +629,32 @@ the authority**.
 
 ```
 $ uv run pytest tests/
-237 passed, 1 warning in 3.73s
+239 passed, 1 skipped, 1 warning in 3.63s          # 240 tests, thirteen files
 ```
 
-In a fresh clone the number reads `236 passed, 1 skipped`: the credential sweep in
-`test_api.py` skips when there is no `.env` to sweep, because there is nothing to look for.
-The badge and the table above count *tests*, which is 237 either way.
+In a fresh clone the number is identical — `239 passed, 1 skipped` — and the single skip is
+reported as `no .env in this checkout`: the credential sweep in `test_api.py` has nothing to
+sweep until a `.env` exists, and `.env` is deliberately not in this repository. The badge and
+the table above count *tests*, which is 240 either way.
 
 By file, from `--collect-only`:
 
 ```
-tests/test_a_contract.py                     36
 tests/test_c_evidence_scope_conflict.py      42
+tests/test_a_contract.py                     36
 tests/test_d_lifecycle.py                    32
-tests/test_e_fault_adversarial_commit.py     28
 tests/test_i_review.py                       28
-tests/test_g_binding.py                      15
+tests/test_e_fault_adversarial_commit.py     28
 tests/test_h_intake.py                       15
-tests/test_api.py                            12
+tests/test_g_binding.py                      15
 tests/test_j_live_adapters.py                12
+tests/test_api.py                            12
 tests/test_smoke.py                          10
 tests/test_three_app_flagship.py              4
+tests/test_k_counters.py                      3
 tests/test_f_campaign.py                      3
                                             ---
-                                            237
+                                            240
 ```
 
 The fixture dates are computed from a real date, not frozen: the base is the Monday of

@@ -66,21 +66,27 @@ def links(md: str) -> list[str]:
 
 
 def replace_toc(md: str, toc: str) -> str | None:
-    """Rewrite the block between the TOC heading and the next rule.
+    """Rewrite the block between the TOC heading and the next heading.
 
     Idempotent on purpose: the first version replaced a one-shot marker, so it could
     only ever run once and every later heading change left the TOC stale.
+
+    The block used to end at the next `---` rule. That is a trap: a README whose sections
+    are separated by headings rather than rules has its next `---` hundreds of lines down
+    (or inside a table), so the rewrite silently deletes every section in between. The
+    block now ends where the next heading begins, and main() refuses the write if the
+    heading count changed — the whole point of this script is that it cannot lose content.
     """
     lines = md.splitlines()
     try:
         start = next(i for i, line in enumerate(lines) if line.strip() == "## Table of contents")
     except StopIteration:
         return None
-    end = next((i for i in range(start + 1, len(lines)) if lines[i].strip() == "---"),
-               None)
+    end = next((i for i in range(start + 1, len(lines))
+                if re.match(r"^#{1,6}\s", lines[i].strip())), None)
     if end is None:
         return None
-    return "\n".join(lines[:start + 1] + [""] + toc.splitlines() + lines[end:]) + "\n"
+    return "\n".join(lines[:start + 1] + [""] + toc.splitlines() + [""] + lines[end:]) + "\n"
 
 
 def main() -> int:
@@ -101,10 +107,12 @@ def main() -> int:
         if dead:
             print("fix the link or the heading that was supposed to match it")
             return 1
-        # and the table itself must not have drifted from the headings
-        current = "\n".join(
-            line for line in md.split("## Table of contents")[1].split("---")[0].splitlines()
-            if line.strip().startswith("- ["))
+        # and the table itself must not have drifted from the headings. Cropped at the next
+        # heading, not at the next `---`: a rule can live inside a table further down.
+        after = md.split("## Table of contents", 1)[1]
+        block = re.split(r"^#{1,6}\s", after, maxsplit=1, flags=re.M)[0]
+        current = "\n".join(line for line in block.splitlines()
+                            if line.strip().startswith("- ["))
         if current.strip() != toc.strip():
             print("the table of contents no longer matches the headings — re-run without --check")
             return 1
@@ -115,8 +123,18 @@ def main() -> int:
     if updated is None:
         print("no '## Table of contents' heading in README.md")
         return 1
+    # Losing sections to a TOC rewrite is the worst failure this script can have, and it
+    # happened once: bound the block, then refuse the write if anything but the table moved.
+    before, after = headings(md), headings(updated)
+    if len(before) != len(after):
+        print(f"refusing to write: the rewrite would change the heading count "
+              f"({len(before)} -> {len(after)}) — the TOC block is not where this thinks it is")
+        return 1
+    if len(updated) < len(md) - len(toc) - 200:
+        print("refusing to write: the rewrite would delete a large part of the file")
+        return 1
     README.write_text(updated)
-    print(f"wrote {len(toc.splitlines())} TOC entries")
+    print(f"wrote {len(toc.splitlines())} TOC entries, headings intact ({len(after)})")
     return 0
 
 

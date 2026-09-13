@@ -249,6 +249,15 @@ def _metrics(s) -> dict:
     enforces by reading those modules' imports.
     """
     m = s.outcomes.metrics()
+    # The state-of-the-world counters are read off the registry — the ledger — rather than
+    # off the most recent run per intent. Pressing a sequence again records an IDEMPOTENT
+    # run, and a panel that then reported fewer commits than the ledger holds would be
+    # printing a number that contradicts the ledger: exactly what this project refuses to
+    # do, in the one place that claims to be computed by walking every commit. Refusals and
+    # the duplicate counts stay as recorded per intent, since those are facts about runs.
+    rows = s.registry.list_all()
+    m["intents"] = len(rows)
+    m["committed"] = sum(1 for r in rows if r["status"] == "COMMITTED")
     false_commits = 0
     post_commit_duplicates = 0
     # A committed effect may legitimately end in POST_COMMIT_DUPLICATE: it was verified,
