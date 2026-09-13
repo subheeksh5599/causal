@@ -147,7 +147,16 @@ const esc = (s) => String(s ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt
 const chip = (s) => `<span class="chip ${esc(s)}">${esc(s)}</span>`;
 
 async function boot() {
-  const s = await (await fetch('/api/state')).json();
+  let s;
+  try {
+    s = await (await fetch('/api/state')).json();
+  } catch (e) {
+    // Without this, a failed fetch leaves an empty rail and every button missing, which
+    // looks identical to a page that does not work.
+    $('seqs').innerHTML = '<p class="muted" style="font-size:12px">Could not reach the '
+      + 'engine at <code>/api/state</code>. Is the server still running?</p>';
+    return;
+  }
   $('mode').textContent = 'mode · ' + s.mode;
   $('mode').className = 'badge ' + (s.mode === 'LOCAL' ? 'warn' : 'ok');
   const rail = $('seqs'); rail.innerHTML = '';

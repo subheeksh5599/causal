@@ -70,9 +70,15 @@
     What CAUSAL is responsible for, in words. Anything that reaches the outside world
     waits for your approval. Nothing else does.
   </p>
+  <div id="queue" class="empty hidden"></div>
+  <button class="ghost" id="again" onclick="load()">check again</button>
   <div id="jobs"><div class="empty">No jobs yet. Run a sequence in the
     <a href="/">operator console</a> first.</div></div>
   <footer id="foot"></footer>
+  <p class="lead" style="margin-top:10px;font-size:12px">
+    This page reads the same engine the console drives. Nothing here is a separate
+    implementation.
+  </p>
 </div>
 <script>
 const PHRASE = {
@@ -95,6 +101,15 @@ async function load(){
   window.__jobs = body.jobs;
   document.getElementById("mode").textContent = "mode " + body.mode;
   const box = document.getElementById("jobs"); box.innerHTML = "";
+  const queue = document.getElementById("queue");
+  // A page whose only button is "show the states" reads as broken. Say plainly when the
+  // queue is empty, and point at the thing that fills it.
+  if(body.jobs.length && !body.need_approval.length){
+    queue.classList.remove("hidden");
+    queue.innerHTML = "<b>Nothing is waiting for you.</b> Every job below is already "
+      + "finished or was stopped on purpose. Run a sequence in the "
+      + "<a href=\"/\">operator console</a>, then press <b>check again</b>.";
+  } else { queue.classList.add("hidden"); queue.innerHTML = ""; }
   if(!body.jobs.length){ box.innerHTML =
     '<div class="empty">No jobs yet. Run a sequence in the <a href="/">operator console</a> first.</div>'; return; }
   body.jobs.forEach(job => box.insertAdjacentHTML("beforeend", card(job)));

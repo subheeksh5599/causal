@@ -43,6 +43,7 @@ REVIEW_LABELS = (
     # static markup only: the job headlines are composed at runtime by plain.job_view and
     # are checked against the API payload below instead, where they actually come from
     "Approve and send", "operator console", "in words", "show the states",
+    "check again", "Nothing is waiting for you", "No jobs yet",
 )
 
 
@@ -139,7 +140,12 @@ def main() -> int:
                      "approved_by": "dana.reyes@acme.example"})
     check("approving commits the job", approved["result"]["committed"], True)
     after = call("GET", f"{b}/api/jobs")
-    check("nothing waits any more", len(after["need_approval"]), 0)
+    check("nothing waits any more", len(call("GET", f"{b}/api/jobs")["need_approval"]), 0)
+    # An empty queue must SAY it is empty: leaving a page whose only live control is
+    # "show the states" reads as a broken page, not an idle one.
+    with urllib.request.urlopen(f"{b}/review", timeout=30) as resp:
+        page = resp.read().decode()
+    check("the page explains an empty queue", "Nothing is waiting for you" in page, True)
     check("its row now reads done",
           [j["headline"] for j in after["jobs"] if j["intent_id"] == jobs["need_approval"][0]["intent_id"]],
           ["Done. 3 of 3 systems confirmed."])

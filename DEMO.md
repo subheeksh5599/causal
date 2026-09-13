@@ -123,8 +123,8 @@ Click **Approve and send**.
 
 > "It records who approved — an unnamed approval is refused."
 
-The card becomes `Done. 3 of 3 systems confirmed.` and the footer reads
-`3 job(s) · 0 waiting for you`.
+The card becomes `Done. 3 of 3 systems confirmed.`, a line appears above the list reading
+**Nothing is waiting for you**, and the footer reads `3 job(s) · 0 waiting for you`.
 
 ### 1:25 — back to the console. In the **Ask in words** panel, click **read it**
 
