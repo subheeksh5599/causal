@@ -108,14 +108,13 @@ flowchart TD
 
 ```bash
 $ uv run pytest tests/
-239 passed, 1 skipped, 1 warning in 3.63s          # 240 tests, thirteen files
+239 passed, 1 skipped in 3.63s                      # 240 tests, thirteen files
 ```
 
 ```bash
 $ uv run python scripts/demo_preflight.py
 81 claims checked, all match.
-The ledger has just been reset, so the first click will produce those numbers.
-Start recording now — and do not press 'reset ledger' again.
+The ledger has been reset, so the first click reproduces those numbers.
 ```
 
 ```bash
@@ -565,10 +564,10 @@ Nothing below is a screenshot standing in for evidence. Each row is an artifact 
 
 ```
 $ uv run pytest tests/
-239 passed, 1 skipped, 1 warning in 3.63s          # 240 tests, thirteen files
+239 passed, 1 skipped in 3.63s                      # 240 tests, thirteen files
 ```
 
-In this repository the run reads `240 passed, 1 warning` — the credential sweep in `test_api.py` runs, because a `.env` exists to sweep. In a fresh clone it reads `239 passed, 1 skipped`, reported as `no .env in this checkout`: there is nothing to sweep, and `.env` is deliberately not in this repository. The badge and the table above count *tests*, which is 240 either way.
+In this repository the run reads `240 passed` — the credential sweep in `test_api.py` runs, because a `.env` exists to sweep. In a fresh clone it reads `239 passed, 1 skipped`, reported as `no .env in this checkout`: there is nothing to sweep, and `.env` is deliberately not in this repository. The badge and the table above count *tests*, which is 240 either way.
 
 By file, from `--collect-only`:
 

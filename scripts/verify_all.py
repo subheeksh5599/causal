@@ -79,7 +79,7 @@ def main() -> int:
     badge = re.search(r"tests-(\d+)%20passing", md)
     report.add("badge count is real", bool(badge) and int(badge.group(1)) == actual_tests,
                f"badge says {badge.group(1) if badge else '?'}, suite says {actual_tests}")
-    summary = re.search(r"^(\d+) passed(?:, (\d+) skipped)?,", md, re.M)
+    summary = re.search(r"^(\d+) passed(?:, (\d+) skipped)?", md, re.M)
     if summary:
         # A skipped test is part of the suite, so the quoted line is compared as
         # passed + skipped. Comparing only `passed` made an honest skip look like a stale

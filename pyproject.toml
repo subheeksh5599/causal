@@ -18,4 +18,9 @@ packages = ["src/causal"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q --timeout=60"
-filterwarnings = ["ignore::DeprecationWarning"]
+# Starlette's test client warns that it wants httpx2; that is a third-party deprecation
+# notice, not a failure, and it should not appear as one in a test summary.
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:Using .httpx. with .starlette.testclient. is deprecated:Warning",
+]

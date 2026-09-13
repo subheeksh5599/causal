@@ -204,8 +204,7 @@ def main() -> int:
             print(f"  - {item}")
         return 1
     print(f"{PASSES} claims checked, all match.")
-    print("The ledger has just been reset, so the first click will produce those numbers.")
-    print("Start recording now — and do not press 'reset ledger' again.")
+    print("The ledger has been reset, so the first click reproduces those numbers.")
     return 0
 
 
