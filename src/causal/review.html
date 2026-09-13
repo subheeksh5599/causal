@@ -57,3 +57,100 @@
   footer{margin-top:26px;color:var(--faint);font-size:13px}
 </style>
 </head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Jobs</h1>
+    <span class="badge" id="mode">mode …</span>
+    <span class="badge ok" id="apps">gmail · calendar · linear</span>
+    <span style="flex:1"></span>
+    <a href="/">operator console →</a>
+  </header>
+  <p class="lead">
+    What CAUSAL is responsible for, in words. Anything that reaches the outside world
+    waits for your approval. Nothing else does.
+  </p>
+  <div id="jobs"><div class="empty">No jobs yet. Run a sequence in the
+    <a href="/">operator console</a> first.</div></div>
+  <footer id="foot"></footer>
+</div>
+<script>
+const PHRASE = {
+  VERIFIED:["confirmed by reading it back from the system","tick"],
+  AWAITING_APPROVAL:["waiting for a person to approve it","warn"],
+  AMBIGUOUS:["two identical things exist and I cannot tell which is ours","bad"],
+  NOT_PROVABLE:["could not be confirmed either way, so it was not repeated","bad"],
+  POST_COMMIT_DUPLICATE:["a duplicate appeared afterwards","warn"],
+  VERIFICATION_FAILED:["there, but it does not match what was agreed","bad"],
+  UNKNOWN:["written or not — nobody knows yet","warn"],
+  EFFECTED:["written, not yet confirmed",""],
+  RECONCILING:["checking what actually happened",""],
+  NOT_FOUND:["not there",""], PLANNED:["not started",""], REQUESTED:["being written",""]
+};
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+async function load(){
+  const r = await fetch("/api/jobs"); const body = await r.json();
+  window.__jobs = body.jobs;
+  document.getElementById("mode").textContent = "mode " + body.mode;
+  const box = document.getElementById("jobs"); box.innerHTML = "";
+  if(!body.jobs.length){ box.innerHTML =
+    '<div class="empty">No jobs yet. Run a sequence in the <a href="/">operator console</a> first.</div>'; return; }
+  body.jobs.forEach(job => box.insertAdjacentHTML("beforeend", card(job)));
+  document.getElementById("foot").textContent =
+    body.jobs.length + " job(s) · " + body.need_approval.length + " waiting for you";
+}
+
+function card(job){
+  const lines = job.effects.map(e => {
+    const [word, tone] = PHRASE[e.state] || [e.state.toLowerCase(), ""];
+    const mark = e.state === "VERIFIED" ? "✓" : (tone === "warn" ? "!" : tone === "bad" ? "✕" : "·");
+    return `<li><span class="app">${esc(e.app)}</span>
+      <span class="phrase">${esc(word)}</span>
+      <span class="tick ${tone}">${mark}</span></li>`;
+  }).join("");
+  const who = job.approved_by.length
+    ? `<div class="why">approved by ${esc(job.approved_by.join(", "))}</div>` : "";
+  const act = job.can_approve ? `
+    <div class="act">
+      <input id="who-${esc(job.intent_id)}" value="dana.reyes@acme.example"
+             aria-label="who is approving">
+      <button onclick="approve('${esc(job.intent_id)}')">Approve and send</button>
+    </div>` : "";
+  return `<div class="job ${esc(job.app)}">
+    <div class="top">
+      <div class="head">${esc(job.headline)}</div>
+      <span class="id">${esc(job.intent_id)} · ${job.confirmed}/${job.of}</span>
+    </div>
+    <ul class="effects">${lines}</ul>
+    ${job.detail ? `<div class="why">${esc(job.detail)}</div>` : ""}
+    ${who}${act}
+    <div class="act">
+      <button class="ghost" onclick="raw('${esc(job.intent_id)}')">show the states</button>
+    </div>
+    <pre class="hidden" id="raw-${esc(job.intent_id)}"></pre>
+  </div>`;
+}
+
+async function approve(intentId){
+  const who = document.getElementById("who-" + intentId).value.trim();
+  const r = await fetch("/api/approve", {method:"POST",
+    headers:{"content-type":"application/json"},
+    body: JSON.stringify({intent_id: intentId, approved_by: who})});
+  const body = await r.json();
+  if(!r.ok){ alert(body.detail || "could not approve"); return; }
+  await load();
+}
+
+function raw(intentId){
+  const el = document.getElementById("raw-" + intentId);
+  el.classList.toggle("hidden");
+  if(!el.textContent) el.textContent = JSON.stringify(
+    (window.__jobs || []).find(j => j.intent_id === intentId) || {}, null, 2);
+}
+
+load();
+</script>
+</body>
+</html>
