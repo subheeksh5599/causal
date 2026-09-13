@@ -94,7 +94,6 @@ flowchart TD
 - [What's real vs pending — the honesty table](#whats-real-vs-pending--the-honesty-table)
 - [Attack → test](#attack--test)
 - [The app](#the-app)
-- [Prior art, credited](#prior-art-credited)
 - [Limitations](#limitations)
 - [Security](#security)
 - [Tech stack](#tech-stack)
@@ -438,18 +437,6 @@ Two pages, one process, no build step. `uv run uvicorn causal.api:app --port 800
 **The operator console** has one button per sequence. Each press runs the real engine and renders the contract and its hash, the frozen authority snapshot, the evidence gate result, the conflict key and outcome, every effect with its state, external id and write-attempt count, any reconciliation with its confidence, the commit verdict with its reasons, and the hash-chained timeline beside it. It also has a panel where you type a request in words and watch a proposer offer a contract — including one that tries to widen its own authority and is refused on the field.
 
 **The review page** (`/review`) is the same engine for somebody who is not an engineer: jobs in words, what each system confirmed, what waits on a person, and one Approve button that records who approved.
-
-## Prior art, credited
-
-Not claimed as invented; the honest attribution is worth more than the overclaim, and each was read rather than summarised from a search result.
-
-- **Project Blackbox** — a root cause must pass an evidence gate before remediation, working backward through real lineage. CAUSAL applies that discipline to the whole action chain rather than the diagnosis.
-- **Hindsight** — an agent that reports its own success proves nothing. Every write here is verified by reading it back through a different API, and a tool without a verifier is failed rather than skipped.
-- **ContextSeal** — froze a reviewable authorisation scope a human signs off before any write, bound to a specific commit.
-- **Remedi** — seals a repair plan with hashes, requires approval before execution, and refuses to mark an assertion passed because a patch was generated.
-- **in-toto / SLSA** and plan-hash-bound approvals established, outside the agent world, that a pre-registered contract plus per-step evidence is how you prove an artifact came from an authorised step.
-
-What is proposed as new is the combination: **an external action is not successful because the artifact exists, but only if it is provably the authorised, conflict-free consequence of one frozen intent — enforced across applications that share no transaction boundary.**
 
 ## Limitations
 

@@ -15,9 +15,9 @@ Written to be read by a sceptic. Everything here is a real bound on what the sys
   commit together by an orchestration layer. CAUSAL aims at the honest version: detect the
   disagreement, refuse to call it success, and reconcile or escalate. That is weaker than a
   distributed transaction and it is not a distributed transaction.
-- **Remediation Zero's admission applies here too.** Where a provider offers no atomic
-  idempotency key, two genuinely concurrent callers can still race. CAUSAL narrows this to a
-  local unique constraint plus an external read-back; it does not close it.
+- **Two genuinely concurrent callers can still race.** Where a provider offers no atomic
+  idempotency key, CAUSAL narrows this to a local unique constraint plus an external read-back;
+  it does not close it.
 
 ## Bounded by inputs
 
