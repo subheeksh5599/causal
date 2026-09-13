@@ -522,7 +522,9 @@ causal/
 
 ## Full command reference
 
-Everything above runs offline. Dates come from the real clock — the base is the Monday of the
+Everything above runs without network access — the suite, the campaign and the console are all
+offline-capable, and the live surfaces are separately configured and live (see
+[Live status](#live-status)). Dates come from the real clock — the base is the Monday of the
 current week — so nothing is pinned to the month it was written; pin it to reproduce a run
 byte-for-byte:
 
