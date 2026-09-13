@@ -1,0 +1,2962 @@
+{
+  "runs": 100,
+  "committed": 27,
+  "reconciled": 44,
+  "violations": [],
+  "profiles": {
+    "bind_available/bind_available": 4,
+    "transient_before/lying_id": 2,
+    "clean/transient_before": 3,
+    "transient_after/pre_existing": 2,
+    "lying_id/transient_before": 3,
+    "lying_id/pre_existing": 4,
+    "transient_before/bind_ambiguous": 5,
+    "transient_after/bind_available": 1,
+    "pre_existing/bind_available": 3,
+    "pre_existing/lying_id": 1,
+    "clean/bind_available": 1,
+    "bind_ambiguous/bind_ambiguous": 2,
+    "lying_id/transient_after": 4,
+    "refuse/lying_id": 1,
+    "clean/clean": 2,
+    "bind_available/lying_id": 1,
+    "transient_after/lying_id": 1,
+    "transient_after/refuse": 4,
+    "bind_available/transient_after": 1,
+    "clean/refuse": 2,
+    "refuse/refuse": 2,
+    "bind_ambiguous/lying_id": 3,
+    "transient_after/transient_after": 2,
+    "transient_before/pre_existing": 3,
+    "lying_id/clean": 2,
+    "bind_ambiguous/transient_before": 3,
+    "refuse/transient_after": 2,
+    "pre_existing/clean": 2,
+    "pre_existing/transient_after": 2,
+    "transient_before/clean": 2,
+    "lying_id/bind_available": 2,
+    "pre_existing/refuse": 1,
+    "transient_before/transient_after": 1,
+    "bind_available/bind_ambiguous": 2,
+    "transient_before/bind_available": 4,
+    "clean/bind_ambiguous": 2,
+    "refuse/bind_ambiguous": 1,
+    "transient_after/bind_ambiguous": 2,
+    "transient_after/transient_before": 2,
+    "lying_id/lying_id": 1,
+    "clean/lying_id": 1,
+    "bind_ambiguous/bind_available": 1,
+    "refuse/transient_before": 2,
+    "bind_ambiguous/pre_existing": 3,
+    "clean/pre_existing": 2,
+    "refuse/pre_existing": 1,
+    "bind_available/pre_existing": 1,
+    "bind_available/refuse": 1
+  },
+  "refusals": {
+    "EVIDENCE_MISSING": 15,
+    "NOT_COMMITTED": 30,
+    "AMBIGUOUS_EXTERNAL_STATE": 9,
+    "CONFLICT": 19
+  },
+  "records": [
+    {
+      "seed": 0,
+      "mode": "LOCAL",
+      "intent_id": "R-0",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "bind_available"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 1,
+      "mode": "LOCAL",
+      "intent_id": "R-1",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "lying_id"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 2,
+      "mode": "LOCAL",
+      "intent_id": "R-2",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "transient_before"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 3,
+      "mode": "LOCAL",
+      "intent_id": "R-3",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 4,
+      "mode": "LOCAL",
+      "intent_id": "R-4",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "NOT_FOUND"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 5,
+      "mode": "LOCAL",
+      "intent_id": "R-5",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 6,
+      "mode": "LOCAL",
+      "intent_id": "R-6",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 7,
+      "mode": "LOCAL",
+      "intent_id": "R-7",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 8,
+      "mode": "LOCAL",
+      "intent_id": "R-8",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "bind_available"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 9,
+      "mode": "LOCAL",
+      "intent_id": "R-9",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "lying_id"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 10,
+      "mode": "LOCAL",
+      "intent_id": "R-10",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 11,
+      "mode": "LOCAL",
+      "intent_id": "R-11",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 12,
+      "mode": "LOCAL",
+      "intent_id": "R-12",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "pre_existing"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 13,
+      "mode": "LOCAL",
+      "intent_id": "R-13",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 14,
+      "mode": "LOCAL",
+      "intent_id": "R-14",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 15,
+      "mode": "LOCAL",
+      "intent_id": "R-15",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 16,
+      "mode": "LOCAL",
+      "intent_id": "R-16",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 17,
+      "mode": "LOCAL",
+      "intent_id": "R-17",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 18,
+      "mode": "LOCAL",
+      "intent_id": "R-18",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 19,
+      "mode": "LOCAL",
+      "intent_id": "R-19",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 20,
+      "mode": "LOCAL",
+      "intent_id": "R-20",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 21,
+      "mode": "LOCAL",
+      "intent_id": "R-21",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 22,
+      "mode": "LOCAL",
+      "intent_id": "R-22",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "refuse"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 23,
+      "mode": "LOCAL",
+      "intent_id": "R-23",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "transient_before"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 24,
+      "mode": "LOCAL",
+      "intent_id": "R-24",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 2,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 25,
+      "mode": "LOCAL",
+      "intent_id": "R-25",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 26,
+      "mode": "LOCAL",
+      "intent_id": "R-26",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 27,
+      "mode": "LOCAL",
+      "intent_id": "R-27",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 28,
+      "mode": "LOCAL",
+      "intent_id": "R-28",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 29,
+      "mode": "LOCAL",
+      "intent_id": "R-29",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 30,
+      "mode": "LOCAL",
+      "intent_id": "R-30",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 31,
+      "mode": "LOCAL",
+      "intent_id": "R-31",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "NOT_FOUND"
+      },
+      "reconciliations": 4,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 32,
+      "mode": "LOCAL",
+      "intent_id": "R-32",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 33,
+      "mode": "LOCAL",
+      "intent_id": "R-33",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 34,
+      "mode": "LOCAL",
+      "intent_id": "R-34",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 35,
+      "mode": "LOCAL",
+      "intent_id": "R-35",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 36,
+      "mode": "LOCAL",
+      "intent_id": "R-36",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 37,
+      "mode": "LOCAL",
+      "intent_id": "R-37",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 38,
+      "mode": "LOCAL",
+      "intent_id": "R-38",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 39,
+      "mode": "LOCAL",
+      "intent_id": "R-39",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "bind_available"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 40,
+      "mode": "LOCAL",
+      "intent_id": "R-40",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 41,
+      "mode": "LOCAL",
+      "intent_id": "R-41",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 42,
+      "mode": "LOCAL",
+      "intent_id": "R-42",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 43,
+      "mode": "LOCAL",
+      "intent_id": "R-43",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 44,
+      "mode": "LOCAL",
+      "intent_id": "R-44",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 4,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 45,
+      "mode": "LOCAL",
+      "intent_id": "R-45",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 46,
+      "mode": "LOCAL",
+      "intent_id": "R-46",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_available"
+      },
+      "evidence": false,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 47,
+      "mode": "LOCAL",
+      "intent_id": "R-47",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 48,
+      "mode": "LOCAL",
+      "intent_id": "R-48",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 49,
+      "mode": "LOCAL",
+      "intent_id": "R-49",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 50,
+      "mode": "LOCAL",
+      "intent_id": "R-50",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 51,
+      "mode": "LOCAL",
+      "intent_id": "R-51",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 52,
+      "mode": "LOCAL",
+      "intent_id": "R-52",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 53,
+      "mode": "LOCAL",
+      "intent_id": "R-53",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 54,
+      "mode": "LOCAL",
+      "intent_id": "R-54",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 55,
+      "mode": "LOCAL",
+      "intent_id": "R-55",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 56,
+      "mode": "LOCAL",
+      "intent_id": "R-56",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 57,
+      "mode": "LOCAL",
+      "intent_id": "R-57",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 58,
+      "mode": "LOCAL",
+      "intent_id": "R-58",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 59,
+      "mode": "LOCAL",
+      "intent_id": "R-59",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 60,
+      "mode": "LOCAL",
+      "intent_id": "R-60",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 61,
+      "mode": "LOCAL",
+      "intent_id": "R-61",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 62,
+      "mode": "LOCAL",
+      "intent_id": "R-62",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "NOT_FOUND"
+      },
+      "reconciliations": 4,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 63,
+      "mode": "LOCAL",
+      "intent_id": "R-63",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 64,
+      "mode": "LOCAL",
+      "intent_id": "R-64",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 65,
+      "mode": "LOCAL",
+      "intent_id": "R-65",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 66,
+      "mode": "LOCAL",
+      "intent_id": "R-66",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 67,
+      "mode": "LOCAL",
+      "intent_id": "R-67",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 68,
+      "mode": "LOCAL",
+      "intent_id": "R-68",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "NOT_FOUND"
+      },
+      "reconciliations": 4,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 69,
+      "mode": "LOCAL",
+      "intent_id": "R-69",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "NOT_FOUND"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 70,
+      "mode": "LOCAL",
+      "intent_id": "R-70",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 71,
+      "mode": "LOCAL",
+      "intent_id": "R-71",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 72,
+      "mode": "LOCAL",
+      "intent_id": "R-72",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 73,
+      "mode": "LOCAL",
+      "intent_id": "R-73",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 74,
+      "mode": "LOCAL",
+      "intent_id": "R-74",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "pre_existing"
+      },
+      "evidence": false,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 75,
+      "mode": "LOCAL",
+      "intent_id": "R-75",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 76,
+      "mode": "LOCAL",
+      "intent_id": "R-76",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 77,
+      "mode": "LOCAL",
+      "intent_id": "R-77",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 78,
+      "mode": "LOCAL",
+      "intent_id": "R-78",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 79,
+      "mode": "LOCAL",
+      "intent_id": "R-79",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 80,
+      "mode": "LOCAL",
+      "intent_id": "R-80",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 81,
+      "mode": "LOCAL",
+      "intent_id": "R-81",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 82,
+      "mode": "LOCAL",
+      "intent_id": "R-82",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "lying_id"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 83,
+      "mode": "LOCAL",
+      "intent_id": "R-83",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "transient_before"
+      },
+      "evidence": false,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 2,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 84,
+      "mode": "LOCAL",
+      "intent_id": "R-84",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "clean"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 85,
+      "mode": "LOCAL",
+      "intent_id": "R-85",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 86,
+      "mode": "LOCAL",
+      "intent_id": "R-86",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 87,
+      "mode": "LOCAL",
+      "intent_id": "R-87",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "NOT_FOUND"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 88,
+      "mode": "LOCAL",
+      "intent_id": "R-88",
+      "profiles": {
+        "calendar": "refuse",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "REJECTED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 89,
+      "mode": "LOCAL",
+      "intent_id": "R-89",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 90,
+      "mode": "LOCAL",
+      "intent_id": "R-90",
+      "profiles": {
+        "calendar": "transient_before",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "NOT_FOUND",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 3,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 91,
+      "mode": "LOCAL",
+      "intent_id": "R-91",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "transient_after"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 92,
+      "mode": "LOCAL",
+      "intent_id": "R-92",
+      "profiles": {
+        "calendar": "lying_id",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 93,
+      "mode": "LOCAL",
+      "intent_id": "R-93",
+      "profiles": {
+        "calendar": "bind_ambiguous",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "AMBIGUOUS_EXTERNAL_STATE",
+      "effect_states": {
+        "CALENDAR-01": "AMBIGUOUS",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 94,
+      "mode": "LOCAL",
+      "intent_id": "R-94",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "transient_before"
+      },
+      "evidence": true,
+      "competing": true,
+      "model_claimed": false,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "CONFLICT",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 95,
+      "mode": "LOCAL",
+      "intent_id": "R-95",
+      "profiles": {
+        "calendar": "transient_after",
+        "linear": "bind_ambiguous"
+      },
+      "evidence": false,
+      "competing": false,
+      "model_claimed": true,
+      "status": "REFUSED",
+      "committed": false,
+      "refusal_code": "EVIDENCE_MISSING",
+      "effect_states": {},
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 96,
+      "mode": "LOCAL",
+      "intent_id": "R-96",
+      "profiles": {
+        "calendar": "pre_existing",
+        "linear": "bind_available"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 97,
+      "mode": "LOCAL",
+      "intent_id": "R-97",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 98,
+      "mode": "LOCAL",
+      "intent_id": "R-98",
+      "profiles": {
+        "calendar": "clean",
+        "linear": "pre_existing"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": true,
+      "status": "COMMITTED",
+      "committed": true,
+      "refusal_code": "",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "VERIFIED"
+      },
+      "reconciliations": 0,
+      "artifacts": {
+        "calendar": 1,
+        "linear": 1
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    },
+    {
+      "seed": 99,
+      "mode": "LOCAL",
+      "intent_id": "R-99",
+      "profiles": {
+        "calendar": "bind_available",
+        "linear": "refuse"
+      },
+      "evidence": true,
+      "competing": false,
+      "model_claimed": false,
+      "status": "BLOCKED",
+      "committed": false,
+      "refusal_code": "NOT_COMMITTED",
+      "effect_states": {
+        "CALENDAR-01": "VERIFIED",
+        "LINEAR-01": "REJECTED"
+      },
+      "reconciliations": 1,
+      "artifacts": {
+        "calendar": 0,
+        "linear": 0
+      },
+      "truth": {
+        "calendar": "live",
+        "linear": "live",
+        "slack": 0
+      },
+      "violations": []
+    }
+  ]
+}
