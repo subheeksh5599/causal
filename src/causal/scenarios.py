@@ -369,6 +369,7 @@ def run(name: str, stack: Stack) -> dict:
         msg = seed_approval(stack, "Margie", "renewal", TUESDAY, "msg-17")
         intent = build_binding_intent("Margie", "Renewal", TUESDAY, intent_id="C-C001")
         r = engine.run(intent, evidence_message_id=msg)
+        stack.engine.signoff_apps = None          # never leak an operator policy
         effects = stack.ledger.all(intent.intent_hash)
         approvals = stack.ledger.approvals(intent.intent_hash)
         payload |= {
