@@ -446,3 +446,203 @@ What is proposed as new here is the combination: **an external action is not suc
 - **The commit is only as strong as the postconditions.** Three app checkers ship — calendar, Linear, Slack — plus a temporal-claims check, and each one is registered against the intent rather than written ad hoc. A gap in a checker is a gap in the guarantee, and a required effect with no registered checker is refused rather than passed.
 - **`AMBIGUOUS` stops and asks a human.** Deliberate. A system that guesses between two plausible artifacts is worse than one that refuses.
 
+## Security
+
+The model cannot grant authority, declare verified, commit, override scope or conflict, choose a retry after `UNKNOWN`, or change authority after freeze. Those are structural — there is no parameter through which a model opinion reaches a state transition, and `test_136` fails if a refactor introduces one.
+
+Secrets live in `.env`: gitignored, chmod 600, never printed. `scripts/secret_scan.py` scans the working tree, every tracked file **and the full git history** for both credential shapes and the literal values in `.env`, and verifies `.env` is untracked. `.git/hooks/pre-push` runs it, so a push containing a credential is refused rather than discouraged. Before the first push, that scanner caught a live session token that had been written into the repository.
+
+## Tech stack
+
+| | |
+|---|---|
+| Language | Python 3.13 |
+| HTTP | FastAPI + Uvicorn |
+| Store | SQLite (stdlib `sqlite3`), one file, WAL |
+| HTTP client | `httpx` in the adapters, stdlib `urllib` for the scripts |
+| UI | Two static HTML pages served by the same process — no Node, no bundler, no build step |
+| Tests | pytest, `pytest-timeout` |
+| Deps | `fastapi`, `uvicorn`, `httpx`, `pydantic` |
+
+Deliberately small. The protocol is the deliverable, and a two-core laptop can run the whole thing with one command.
+
+## Project layout
+
+```
+causal/
+├── src/causal/
+│   ├── intent.py          the contract: scope, authority, freeze, canonical hashing
+│   ├── intake.py          words → contract, with reserved fields a proposer cannot set
+│   ├── policy.py          scope policy and can_commit
+│   ├── registry.py        one active intent per outcome, leases, takeover
+│   ├── ledger.py          the 12-state effect machine, approvals
+│   ├── engine.py          the commit loop
+│   ├── binding.py         semantic fingerprints, match hierarchy, exclusivity
+│   ├── reconcile.py       deterministic reconciliation levels
+│   ├── postconditions.py  registered checkers per effect
+│   ├── audit.py           hash-chained log
+│   ├── evidence_sink.py   the outcome store the counters are computed from
+│   ├── plain.py           the same states in words
+│   ├── apps.py            the in-process fakes (mail, calendar, linear, slack)
+│   ├── adapters.py        local fakes, live clients, twin clients
+│   ├── scenarios.py       the sequences, shared by the CLI and the console
+│   ├── api.py             the console and review API
+│   ├── console.html       the operator console
+│   └── review.html        the page a non-engineer reads
+├── tests/                 twelve files, 237 tests
+├── scripts/
+│   ├── demo.py            the original six sequences, printed with narration
+│   ├── verify_all.py      the release gate: suite, campaign, scan, anchors, claim drift
+│   ├── demo_preflight.py  walks DEMO.md's click order and checks every number it quotes
+│   ├── live_run.py        run the flagship against the three real apps
+│   ├── campaign.py        randomised adversarial campaign
+│   ├── verify_live.py     per-surface LIVE / UNCONFIGURED / FAILED
+│   ├── secret_scan.py     tree, tracked files, history and .env values
+│   ├── readme_toc.py      builds the table of contents and proves no anchor is dead
+│   ├── google_oauth.py    the one consent flow
+│   ├── twin_run.py        run the flagship against twin-backed services
+│   └── arga_probe.py      probe the twin API
+├── ARCHITECTURE.md        module map and state machine
+├── EVALUATION.md          fault matrix and what is measured
+├── LIMITATIONS.md         what this cannot do
+├── DEMO.md                the two-minute demo, clicks and narration
+├── LICENSE                MIT
+└── pyproject.toml
+```
+
+## Full command reference
+
+Everything above runs offline. This section has the environment variables, the clock pin and
+the live-surface details.
+
+The console's dates come from the real clock — the base is the Monday of the current week — so nothing in the demo is pinned to the month it was written. To reproduce a specific run byte-for-byte, pin the clock:
+
+```bash
+CAUSAL_REFERENCE_DATE=2026-09-14 uv run python scripts/demo.py
+```
+
+For the live surfaces:
+
+```bash
+# which surfaces can actually be reached, and what is missing for the rest
+uv run python scripts/verify_live.py
+uv run python scripts/verify_live.py --write     # also create and read back
+
+# the randomised campaign
+uv run python scripts/campaign.py --runs 100
+```
+
+Optional, read from the environment and never committed:
+
+```
+ARGA_API_KEY, ARGA_API_URL        twin-backed external services (TWIN mode)
+LINEAR_API_KEY, LINEAR_TEAM_ID    the one live surface
+GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REFRESH_TOKEN   Gmail + Calendar
+CAUSAL_MODE                       LOCAL (default) | LIVE | TWIN
+CAUSAL_REFERENCE_DATE             pin the fixture clock (e.g. 2026-09-14) to reproduce a run
+CAUSAL_MODEL_URL, CAUSAL_MODEL_KEY   a model proposer at intake, if you want one
+```
+
+## How I'd deploy it
+
+Not deployed, and that is the honest state rather than a broken link.
+
+- **The store.** SQLite is the right call for one host and the wrong call for more than one. The uniqueness guarantee is a partial unique index in the database, so moving to Postgres means moving that index — the mechanism survives, the file does not.
+- **The process.** One Uvicorn process serves the API and both pages. Behind a proxy it needs nothing else; the console is static HTML and the API is stateless between requests apart from the ledger.
+- **The Google surfaces.** They stay `UNCONFIGURED` until the consent is given. `scripts/google_oauth.py` exists to capture a refresh token; Google refuses an injected browser session, so a human has to click it in a browser they are already signed into. Until then, `LOCAL` and `TWIN` are what the console demonstrates.
+- **What would have to change for real traffic.** The sign-off boundary would move from `signoff_apps` on the engine to a policy store, the leases would want a real clock source instead of wall time, and the bind search would need paging against surfaces large enough that a full scan is not viable.
+
+## Results and supporting records
+
+Nothing below is a screenshot. Each row is an artifact in this repository that a judge can
+open and check, and where a prose summary and an artifact ever disagree, **the artifact is
+the authority**.
+
+| Evidence | What it supports |
+|---|---|
+| `uv run python scripts/verify_all.py` | The gate: suite, campaign, secret scan, anchors, and that the numbers in this file match reality |
+| `tests/` — 237 tests, twelve files | Every claim in the honesty table, each group naming the artifact behind it |
+| `evidence/campaign.json` | The 100-run randomised campaign: 48 fault combinations, zero invariant violations |
+| `tests/test_g_binding.py` | The four measured rates: semantic recovery, false binding, duplicate prevention, ambiguity refusal |
+| `evidence/summary.json`, `evidence/sequence-*.json` | The last CLI run's counters and per-sequence output |
+| `DEMO.md` + `scripts/demo_preflight.py` | The two-minute demo, and 31 assertions that its numbers match the console |
+| `SUBMISSION.md` | The system and reliability brief, including what is not claimed |
+| `ARCHITECTURE.md`, `EVALUATION.md`, `LIMITATIONS.md` | The module map, the fault matrix, and the open limits |
+| `.git/hooks/pre-push`, `scripts/secret_scan.py` | That no credential can be pushed: tree, tracked files, full history and `.env` values |
+| The live Linear issue | The one surface verified against its real provider — see the honesty table |
+
+## Tests
+
+```
+$ uv run pytest tests/
+237 passed, 1 warning in 3.73s
+```
+
+In a fresh clone the number reads `236 passed, 1 skipped`: the credential sweep in
+`test_api.py` skips when there is no `.env` to sweep, because there is nothing to look for.
+The badge and the table above count *tests*, which is 237 either way.
+
+By file, from `--collect-only`:
+
+```
+tests/test_a_contract.py                     36
+tests/test_c_evidence_scope_conflict.py      42
+tests/test_d_lifecycle.py                    32
+tests/test_e_fault_adversarial_commit.py     28
+tests/test_i_review.py                       28
+tests/test_g_binding.py                      15
+tests/test_h_intake.py                       15
+tests/test_api.py                            12
+tests/test_j_live_adapters.py                12
+tests/test_smoke.py                          10
+tests/test_three_app_flagship.py              4
+tests/test_f_campaign.py                      3
+                                            ---
+                                            237
+```
+
+The fixture dates are computed from a real date, not frozen: the base is the Monday of
+the current week, so the console shows this week's dates whenever it is opened. Pin a run
+to reproduce the numbers quoted here with
+`CAUSAL_REFERENCE_DATE=2026-09-14 uv run python scripts/demo.py` — which is how the block
+below was produced, and why its dates read as they do.
+
+The sequences, as printed by the last `scripts/demo.py` run:
+
+```
+1 · intended path          COMMITTED   evidence PASSED, authority frozen
+                                       2/2 effects VERIFIED via independent read-back
+                                       read back from the apps: calendar 1, linear 1
+
+2 · timeout AFTER write    VERIFIED    write attempts = 1
+                                       reconciliation EXACT, found_existing = True
+                                       duplicate avoided: YES — verified, not repeated
+
+3 · two intents            REFUSED     A ACTIVE holding CONTOSO::ROLLOUT::KICKOFF
+                                       B refused: CONFLICT
+                                       wrote this sequence: 0 / 0 / 0
+
+4 · API success ≠ truth    BLOCKED     contract says Tuesday 15:00, model proposed Wednesday 16:00
+                                       CALENDAR-01 VERIFICATION_FAILED, LINEAR-01 VERIFIED
+                                       committed = false · the artifact really says 2026-09-16T16:00
+
+5 · no evidence            REFUSED     EVIDENCE_MISSING
+                                       wrote this sequence: 0 / 0 / 0  (a delta, not a total)
+
+6 · a model claiming       REFUSED     model says {"status":"COMMITTED","verified":true}
+    total success                      system says EVIDENCE_MISSING
+                                       times the engine consulted a model: 0
+```
+
+```
+commits 2 · refusals 3 · ambiguous outcomes reconciled 1 · duplicates prevented 2
+duplicates written 0 · false commits 0 · LLM-approved completions 0
+```
+
+Reproducible: running the set twice produces identical summaries, asserted by a test.
+
+One caveat on everything above: nothing in this file is aspirational. If a line here is not backed by an artifact you can run, it is a bug in the file and I would rather you reported it than trusted it.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
