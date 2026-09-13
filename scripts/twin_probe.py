@@ -1,4 +1,4 @@
-"""Provision Arga service twins, one per call, and report only their shape.
+"""Provision twin-backed services, one per call, and report only their shape.
 
 Twin responses carry session credentials, so the raw JSON goes to .twins/
 (gitignored, chmod 600) and this script prints key names and base URLs only.
@@ -25,10 +25,10 @@ def load_env():
 
 
 load_env()
-base = (os.environ.get("ARGA_API_URL") or os.environ.get("ARGA_BASE_URL") or "").rstrip("/")
-key = os.environ.get("ARGA_API_KEY")
+base = (os.environ.get("TWIN_API_URL") or os.environ.get("TWIN_BASE_URL") or "").rstrip("/")
+key = os.environ.get("TWIN_API_KEY") or ""
 if not base or not key:
-    sys.exit("ARGA_API_URL / ARGA_API_KEY missing")
+    sys.exit("TWIN_API_URL / TWIN_API_KEY missing")
 H = {"Authorization": f"Bearer {key}"}
 OUT.mkdir(exist_ok=True)
 os.chmod(OUT, 0o700)

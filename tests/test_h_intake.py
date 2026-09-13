@@ -101,11 +101,11 @@ def test_a_proposal_may_not_declare_its_own_evidence_requirements():
 
 def test_a_proposal_may_not_reach_for_an_app_outside_the_allowlist():
     payload = good_proposal()
-    payload["effects"].append({"effect_id": "STRIPE-01", "app": "stripe",
+    payload["effects"].append({"effect_id": "PAYMENTS-01", "app": "payments",
                                "operation": "CREATE_PAYMENT"})
     outcome = compile_intent(REQUEST, proposer=HostileProposer(payload))
     assert not outcome.accepted
-    assert any("stripe" in r for r in outcome.reasons), outcome.reasons
+    assert any("payments" in r for r in outcome.reasons), outcome.reasons
 
 
 def test_a_proposal_may_not_invent_an_operation():

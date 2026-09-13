@@ -33,7 +33,7 @@ ENV_PATH = ROOT / ".env"
 
 # shapes that indicate a credential regardless of what is in .env
 PATTERNS = {
-    "arga key": re.compile(r"arga_sk_[A-Za-z0-9_\-]{10,}"),
+    "provider api key": re.compile(r"[a-z]{2,12}_sk_[A-Za-z0-9_\-]{10,}"),
     "google oauth secret": re.compile(r"GOCSPX-[A-Za-z0-9_\-]{10,}"),
     "google refresh token": re.compile(r"1//0[A-Za-z0-9_\-]{20,}"),
     "google api key": re.compile(r"AIza[0-9A-Za-z_\-]{30,}"),

@@ -7,7 +7,7 @@ Three apps, one intent:
     Calendar twin   the kickoff event                       (write + independent read)
     Linear          a real issue in a real workspace        (write + independent read)
 
-Gmail and Calendar come from Arga stateful twins: real services reached over HTTP,
+Gmail and Calendar come from stateful service twins: real services reached over HTTP,
 with persistent state, unique ids, latency and failures, and no OAuth. Linear is
 the production API.
 
@@ -59,8 +59,12 @@ def load_env() -> None:
 
 def provision(name: str, scenario_prompt: str | None = None) -> dict:
     """Provision one twin, wait for ready, return its connection details."""
-    base = (os.environ.get("ARGA_API_URL") or os.environ["ARGA_BASE_URL"]).rstrip("/")
-    headers = {"Authorization": f"Bearer {os.environ['ARGA_API_KEY']}"}
+    base = (os.environ.get("TWIN_API_URL") or os.environ.get("TWIN_BASE_URL")
+            or "").rstrip("/")
+    key = os.environ.get("TWIN_API_KEY") or ""
+    if not base or not key:
+        sys.exit("TWIN_API_URL / TWIN_API_KEY missing (TWIN mode)")
+    headers = {"Authorization": f"Bearer {key}"}
     body: dict = {"twins": [name], "ttl_minutes": TTL_MINUTES}
     if scenario_prompt:
         body["scenario_prompt"] = scenario_prompt

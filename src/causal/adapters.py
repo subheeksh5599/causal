@@ -15,7 +15,7 @@ Design rules enforced here:
     reconciliation.
   * Tokens are read from the environment and never logged, echoed or embedded.
 
-Every client takes an optional `base_url`. Pointing that at an Arga twin gives
+Every client takes an optional `base_url`. Pointing that at a service twin gives
 you the identical code path against a stateful service replica instead of the
 production API — that is the LIVE / TWIN switch, and it is one environment
 variable, not a code change.

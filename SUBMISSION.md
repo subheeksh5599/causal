@@ -6,8 +6,8 @@
 
 ## The problem
 
-AI agents act on APIs that were never designed for autonomous, retrying actors. Stripe takes
-an idempotency key; Gmail, Calendar and Linear do not. They never saw your intent id, they
+AI agents act on APIs that were never designed for autonomous, retrying actors. An API that
+accepts an idempotency key handles that for you; these do not. They never saw your intent id, they
 do not participate in your transaction, and when a response is lost the writer cannot tell
 whether its effect exists. A blind retry duplicates it; no retry loses it. Every dashboard
 stays green either way, because nothing in the stack treats "the call returned" as different

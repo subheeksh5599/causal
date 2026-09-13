@@ -1,7 +1,7 @@
 """Semantic effect identity: bind an intent to an effect the world already has.
 
-Why this exists. Stripe takes an idempotency key. Gmail, Slack, Calendar and Linear
-do not. If the response to a create is lost, the writer cannot tell whether its
+Why this exists. An API that accepts an idempotency key deduplicates for you.
+These do not. If the response to a create is lost, the writer cannot tell whether its
 effect exists, and the only safe question left is not "did my request succeed?" but
 "does an effect matching this intent already exist out there?" That question has to
 be answered against the external system's own state, by matching on the fields that
