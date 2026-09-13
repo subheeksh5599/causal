@@ -1,0 +1,24 @@
+{
+  "intent_id": "C-2002",
+  "intent_hash": "28adbcec73c6f9d1da86d330c233ba6f",
+  "status": "REFUSED",
+  "committed": false,
+  "refusal_code": "CONFLICT",
+  "reasons": [
+    "conflicts with active intent C-2001"
+  ],
+  "evidence": {
+    "ok": true,
+    "source_app": "gmail",
+    "message_id": "msg-3",
+    "approved": true,
+    "stated_start_iso": "2026-09-15T16:00",
+    "content_hash": "c36e1f75d0f80c1c516ad51fb33f4134",
+    "observed_at": 1789295175.2929356,
+    "reasons": []
+  },
+  "effects": [],
+  "reconciliations": [],
+  "writes_attempted": 0,
+  "model_calls": 0
+}
